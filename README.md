@@ -48,7 +48,6 @@ Remindy is a comprehensive subscription management platform that helps individua
 - PHP 8.2 or higher
 - Composer 2.x
 - Node.js 18.x or higher
-- MySQL 8.0+ or PostgreSQL 13+
 - Redis (optional, for caching)
 
 ### Installation
