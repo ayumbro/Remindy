@@ -6,7 +6,6 @@ use App\Http\Controllers\Settings\NotificationController;
 use App\Http\Controllers\PaymentAttachmentController;
 use App\Http\Controllers\PaymentHistoryController;
 use App\Http\Controllers\PaymentMethodController;
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Settings\CurrencyController;
 use App\Http\Controllers\SubscriptionController;
 use Illuminate\Support\Facades\Auth;
@@ -23,11 +22,7 @@ Route::get('/', function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Profile routes
-    Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::patch('profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
-    Route::delete('profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
 
     // Resource routes
     Route::resource('subscriptions', SubscriptionController::class);
