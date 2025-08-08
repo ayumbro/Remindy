@@ -33,7 +33,6 @@ Remindy is a comprehensive subscription management platform that helps individua
 
 ### Advanced Features
 - **Intelligent Date Calculations** - Handles complex billing cycles including month-end scenarios
-- **Time Zone Support** - Notifications delivered at your local time preference
 - **Custom SMTP Configuration** - Use your own email server for notifications
 - **Webhook Integration** - Connect to external services for automated workflows
 - **Flexible Reminder Intervals** - Customize when to receive reminders (30, 15, 7, 3, 1 days before)
@@ -43,12 +42,14 @@ Remindy is a comprehensive subscription management platform that helps individua
 
 ## 🚀 Quick Start
 
+Remindy uses SQLite as the default database, making installation simple with no external database setup required.
+
 ### Prerequisites
 
-- PHP 8.2 or higher
+- PHP 8.2 or higher with SQLite extension
 - Composer 2.x
 - Node.js 18.x or higher
-- Redis (optional, for caching)
+- Redis (optional, for caching and queue management)
 
 ### Installation
 
@@ -74,15 +75,11 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-5. **Configure your database**
-Edit `.env` file with your database credentials:
+5. **Database setup**
+The application uses SQLite by default (no additional database setup required). The database file will be automatically created when you run migrations. If you need to customize the database location, edit the `.env` file:
 ```env
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=remindy
-DB_USERNAME=your_username
-DB_PASSWORD=your_password
+DB_CONNECTION=sqlite
+# DB_DATABASE=/path/to/your/database.sqlite (optional, defaults to database/database.sqlite)
 ```
 
 6. **Run migrations and seeders**
@@ -93,28 +90,6 @@ php artisan migrate --seed
 7. **Build frontend assets**
 ```bash
 npm run build
-```
-
-8. **Start the development server**
-```bash
-php artisan serve
-```
-
-Visit `http://localhost:8000` to see the application.
-
-### Development Setup
-
-For development with hot-reload:
-
-```bash
-# Terminal 1 - PHP server
-php artisan serve
-
-# Terminal 2 - Vite dev server
-npm run dev
-
-# Terminal 3 - Queue worker (for notifications)
-php artisan queue:work
 ```
 
 ## 🔧 Configuration
@@ -132,8 +107,8 @@ To disable new user registrations (useful for personal deployments):
 ### Backend
 - **Laravel 12.x** - PHP web application framework
 - **PHP 8.2+** - Server-side programming language
-- **MySQL/PostgreSQL** - Relational database
-- **Redis** - Caching and queue management
+- **SQLite** - Lightweight, file-based database (no setup required)
+- **Redis** - Caching and queue management (optional)
 - **Laravel Queue** - Background job processing
 
 ### Frontend
