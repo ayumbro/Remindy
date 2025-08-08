@@ -1,0 +1,184 @@
+# Laravel
+/.phpunit.cache
+/node_modules
+/public/build
+/public/hot
+/public/storage
+/storage/*.key
+/vendor
+.env
+.env.backup
+.env.production
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+auth.json
+npm-debug.log
+yarn-error.log
+/.fleet
+/.idea
+/.vscode
+/.nova
+/.zed
+*.log
+.claude
+
+# Laravel Specific
+/bootstrap/compiled.php
+/bootstrap/cache/*
+!bootstrap/cache/.gitignore
+/bootstrap/ssr
+/storage/app/*
+!storage/app/public/
+!storage/app/.gitignore
+/storage/framework/cache/*
+!storage/framework/cache/.gitignore
+!storage/framework/cache/data/.gitignore
+/storage/framework/sessions/*
+!storage/framework/sessions/.gitignore
+/storage/framework/testing/*
+!storage/framework/testing/.gitignore
+/storage/framework/views/*
+!storage/framework/views/.gitignore
+/storage/logs/*
+!storage/logs/.gitignore
+/storage/pail
+
+# Database
+*.sqlite
+*.sqlite3
+database/*.sqlite
+database/*.sqlite3
+database/database.sqlite
+# Ensure local development database is ignored
+/database/database.sqlite
+
+# IDE and Editor files
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.iml
+.env.*.php
+.env.php
+.phpactor.json
+
+# Testing
+/coverage
+.phpunit.cache
+.phpunit.result.cache
+/testbench.yaml
+/tests/report
+/tests/coverage
+
+# Build files
+/public/css/app.css
+/public/js/app.js
+/public/mix-manifest.json
+/public/build/
+/public/hot
+
+# Composer
+/vendor/
+composer.phar
+
+# NPM / Yarn
+/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+*.tmp
+*.temp
+*~
+
+# Laravel Telescope
+/storage/telescope/
+
+# Laravel Horizon
+/storage/horizon/
+
+# Laravel Dusk
+/tests/Browser/screenshots/
+/tests/Browser/console/
+
+# Documentation (auto-generated)
+/docs/_build/
+/docs/api/
+
+# Deployment
+/.docker/
+/docker-compose.override.yml
+/.env.local
+/.env.*.local
+
+# Cache
+/.sass-cache/
+/.cache/
+/cache/
+
+# Logs
+/logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Reports (generated)
+/reports/*.html
+/reports/*.xml
+
+# Temporary files
+/tmp/
+/temp/
+
+# User uploaded files (keep structure but not content)
+/storage/app/public/payment-attachments/*
+!/storage/app/public/payment-attachments/.gitkeep
+/storage/app/private/payment-attachments/*
+!/storage/app/private/payment-attachments/.gitkeep
+/storage/app/public/payment-method-images/*
+!/storage/app/public/payment-method-images/.gitkeep
+
+# Security
+*.pem
+*.key
+*.crt
+*.p12
+.htpasswd
+
+# Misc
+.php_cs.cache
+.php-cs-fixer.cache
+_ide_helper.php
+_ide_helper_models.php
+.phpstorm.meta.php
+
+# Local development configuration
+vite.config.local.js

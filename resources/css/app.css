@@ -1,0 +1,379 @@
+@import 'tailwindcss';
+
+@plugin 'tailwindcss-animate';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+    --font-sans:
+        'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+
+    --radius-lg: var(--radius);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-sm: calc(var(--radius) - 4px);
+
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
+
+    --color-sidebar: var(--sidebar-background);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/*
+  The default border color has changed to `currentColor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--color-gray-200, currentColor);
+    }
+}
+
+:root {
+    --background: hsl(0, 0%, 100%);
+    --foreground: hsl(222, 84%, 4.9%);
+    --card: hsl(0, 0%, 100%);
+    --card-foreground: hsl(222, 84%, 4.9%);
+    --popover: hsl(0, 0%, 100%);
+    --popover-foreground: hsl(222, 84%, 4.9%);
+    --primary: hsl(221, 83%, 53%);
+    --primary-foreground: hsl(0, 0%, 100%);
+    --secondary: hsl(210, 40%, 88%);
+    --secondary-foreground: hsl(222, 84%, 4.9%);
+    --muted: hsl(210, 40%, 92%);
+    --muted-foreground: hsl(215, 16%, 35%);
+    --accent: hsl(210, 40%, 88%);
+    --accent-foreground: hsl(222, 84%, 4.9%);
+    --destructive: hsl(0, 84%, 60%);
+    --destructive-foreground: hsl(0, 0%, 100%);
+    --border: hsl(214, 32%, 82%);
+    --input: hsl(214, 32%, 85%);
+    --ring: hsl(221, 83%, 53%);
+    --chart-1: hsl(221, 83%, 53%);
+    --chart-2: hsl(142, 76%, 36%);
+    --chart-3: hsl(262, 83%, 58%);
+    --chart-4: hsl(32, 95%, 44%);
+    --chart-5: hsl(346, 87%, 43%);
+    --radius: 0.5rem;
+    --sidebar-background: hsl(0, 0%, 97%);
+    --sidebar-foreground: hsl(240, 5.3%, 20%);
+    --sidebar-primary: hsl(221, 83%, 53%);
+    --sidebar-primary-foreground: hsl(0, 0%, 100%);
+    --sidebar-accent: hsl(210, 40%, 88%);
+    --sidebar-accent-foreground: hsl(222, 84%, 4.9%);
+    --sidebar-border: hsl(214, 32%, 82%);
+    --sidebar-ring: hsl(221, 83%, 53%);
+}
+
+.dark {
+    --background: hsl(222, 84%, 4.9%);
+    --foreground: hsl(210, 40%, 98%);
+    --card: hsl(222, 84%, 4.9%);
+    --card-foreground: hsl(210, 40%, 98%);
+    --popover: hsl(222, 84%, 4.9%);
+    --popover-foreground: hsl(210, 40%, 98%);
+    --primary: hsl(217, 91%, 60%);
+    --primary-foreground: hsl(222, 84%, 4.9%);
+    --secondary: hsl(217, 32%, 25%);
+    --secondary-foreground: hsl(210, 40%, 98%);
+    --muted: hsl(217, 32%, 22%);
+    --muted-foreground: hsl(215, 20%, 75%);
+    --accent: hsl(217, 32%, 25%);
+    --accent-foreground: hsl(210, 40%, 98%);
+    --destructive: hsl(0, 84%, 60%);
+    --destructive-foreground: hsl(210, 40%, 98%);
+    --border: hsl(217, 32%, 25%);
+    --input: hsl(217, 32%, 22%);
+    --ring: hsl(217, 91%, 60%);
+    --chart-1: hsl(217, 91%, 60%);
+    --chart-2: hsl(142, 76%, 36%);
+    --chart-3: hsl(262, 83%, 58%);
+    --chart-4: hsl(32, 95%, 44%);
+    --chart-5: hsl(346, 87%, 43%);
+    --sidebar-background: hsl(222, 84%, 4.9%);
+    --sidebar-foreground: hsl(210, 40%, 98%);
+    --sidebar-primary: hsl(217, 91%, 60%);
+    --sidebar-primary-foreground: hsl(222, 84%, 4.9%);
+    --sidebar-accent: hsl(217, 32%, 25%);
+    --sidebar-accent-foreground: hsl(210, 40%, 98%);
+    --sidebar-border: hsl(217, 32%, 25%);
+    --sidebar-ring: hsl(217, 91%, 60%);
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+    }
+}
+
+@layer utilities {
+    /* Enhanced focus styles for better accessibility */
+    .focus-visible\:ring-enhanced:focus-visible {
+        @apply ring-ring ring-offset-background ring-2 ring-offset-2;
+    }
+
+    /* Smooth transitions for theme switching */
+    .theme-transition {
+        transition:
+            background-color 0.2s ease,
+            border-color 0.2s ease,
+            color 0.2s ease;
+    }
+
+    /* Enhanced hover states */
+    .hover-lift:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .dark .hover-lift:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Status color utilities */
+    .status-active {
+        @apply border-green-200 bg-green-50 text-green-700;
+    }
+
+    .dark .status-active {
+        @apply border-green-800 bg-green-950 text-green-300;
+    }
+
+    .status-overdue {
+        @apply border-red-200 bg-red-50 text-red-700;
+    }
+
+    .dark .status-overdue {
+        @apply border-red-800 bg-red-950 text-red-300;
+    }
+
+    .status-ended {
+        @apply border-gray-200 bg-gray-50 text-gray-700;
+    }
+
+    .dark .status-ended {
+        @apply border-gray-800 bg-gray-950 text-gray-300;
+    }
+
+    /* Gradient backgrounds for cards */
+    .card-gradient {
+        background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--muted)) 100%);
+    }
+
+    /* Enhanced shadows */
+    .shadow-enhanced {
+        box-shadow:
+            0 1px 3px rgba(0, 0, 0, 0.1),
+            0 1px 2px rgba(0, 0, 0, 0.06);
+    }
+
+    .dark .shadow-enhanced {
+        box-shadow:
+            0 1px 3px rgba(0, 0, 0, 0.3),
+            0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Responsive table utilities */
+    .table-responsive {
+        @apply overflow-x-auto;
+    }
+
+    @media (max-width: 768px) {
+        .table-responsive table {
+            min-width: 600px;
+        }
+
+        .mobile-stack {
+            @apply flex flex-col space-y-2;
+        }
+
+        .mobile-hide {
+            @apply hidden;
+        }
+
+        .mobile-show {
+            @apply block;
+        }
+    }
+
+    @media (min-width: 769px) {
+        .mobile-show {
+            @apply hidden;
+        }
+    }
+
+    /* Enhanced mobile card layout */
+    .mobile-card {
+        @apply space-y-3 rounded-lg border p-4;
+    }
+
+    .mobile-card-header {
+        @apply flex items-center justify-between;
+    }
+
+    .mobile-card-content {
+        @apply space-y-2 text-sm;
+    }
+
+    /* Responsive grid improvements */
+    .responsive-grid {
+        @apply grid gap-4;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+
+    @media (max-width: 640px) {
+        .responsive-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Calendar dropdown styling */
+    .rdp-dropdown select {
+        @apply bg-background text-foreground border-input;
+    }
+
+    .dark .rdp-dropdown select {
+        @apply bg-background text-foreground border-input;
+    }
+
+    .rdp-dropdown select:hover {
+        @apply bg-accent;
+    }
+
+    .rdp-dropdown select:focus {
+        @apply ring-ring ring-offset-background ring-2 ring-offset-2;
+    }
+
+    /* DatePicker clear button styling */
+    .date-picker-clear-button {
+        @apply absolute top-1/2 right-1 h-6 w-6 -translate-y-1/2 p-0;
+        @apply opacity-70 transition-opacity hover:opacity-100;
+        @apply hover:bg-destructive/10 hover:text-destructive;
+        @apply focus:ring-destructive focus:ring-2 focus:ring-offset-1;
+    }
+
+    .dark .date-picker-clear-button {
+        @apply hover:bg-destructive/20;
+    }
+
+    /* Ensure clear button doesn't interfere with date picker trigger */
+    .date-picker-trigger-with-clear {
+        @apply pr-10;
+    }
+
+    /* Solid styling utilities - remove transparency effects */
+    .solid-card {
+        @apply bg-card border-border shadow-sm;
+        border-width: 1px;
+    }
+
+    .solid-button-secondary {
+        @apply bg-secondary text-secondary-foreground border-border hover:bg-accent border;
+    }
+
+    .solid-button-outline {
+        @apply bg-background text-foreground border-border hover:bg-accent hover:text-accent-foreground border;
+    }
+
+    .solid-input {
+        @apply bg-input border-border text-foreground placeholder:text-muted-foreground;
+        border-width: 1px;
+    }
+
+    .solid-popover {
+        @apply bg-popover border-border shadow-md;
+        border-width: 1px;
+    }
+
+    .solid-dropdown {
+        @apply bg-background border-border shadow-lg;
+        border-width: 1px;
+    }
+
+    /* Enhanced contrast for better readability */
+    .high-contrast-text {
+        @apply text-foreground;
+    }
+
+    .high-contrast-muted {
+        @apply text-muted-foreground;
+    }
+
+    /* Remove opacity and transparency effects */
+    .no-opacity {
+        opacity: 1 !important;
+    }
+
+    .no-transparency {
+        background-color: var(--background) !important;
+    }
+
+    /* Solid badge variants */
+    .solid-badge-default {
+        @apply bg-primary text-primary-foreground;
+    }
+
+    .solid-badge-secondary {
+        @apply bg-secondary text-secondary-foreground border-border border;
+    }
+
+    .solid-badge-outline {
+        @apply bg-background text-foreground border-border border;
+    }
+
+    /* Enhanced focus states */
+    .solid-focus {
+        @apply focus:ring-ring focus:ring-offset-background focus:ring-2 focus:ring-offset-2;
+    }
+}
