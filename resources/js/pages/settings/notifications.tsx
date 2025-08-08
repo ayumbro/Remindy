@@ -31,6 +31,8 @@ interface NotificationSettings {
     notification_email: string;
     webhook_url: string | null;
     webhook_headers: Record<string, string> | null;
+    daily_notification_enabled: boolean;
+    last_daily_notification_sent_at: string | null;
     // SMTP settings (required)
     smtp_host: string | null;
     smtp_port: number | null;
@@ -58,12 +60,14 @@ export default function NotificationSettingsPage({ notificationSettings, availab
     
     const { data, setData, patch, processing, errors, recentlySuccessful } = useForm<NotificationSettings>({
         notification_time_utc: notificationSettings.notification_time_utc,
-        default_email_enabled: notificationSettings.default_email_enabled,
+        default_email_enabled: notificationSettings.default_email_enabled ?? true, // Default to true
         default_webhook_enabled: notificationSettings.default_webhook_enabled,
         default_reminder_intervals: notificationSettings.default_reminder_intervals || [],
         notification_email: notificationSettings.notification_email || '',
         webhook_url: notificationSettings.webhook_url || '',
         webhook_headers: notificationSettings.webhook_headers || {},
+        daily_notification_enabled: notificationSettings.daily_notification_enabled || false,
+        last_daily_notification_sent_at: notificationSettings.last_daily_notification_sent_at,
         // SMTP settings (required)
         smtp_host: notificationSettings.smtp_host || '',
         smtp_port: notificationSettings.smtp_port || 587,
@@ -87,6 +91,18 @@ export default function NotificationSettingsPage({ notificationSettings, availab
         }
     };
 
+
+    // Check if SMTP configuration is valid for enabling test email button
+    const isSmtpConfigValid = () => {
+        return !!(
+            data.smtp_host?.trim() &&
+            data.smtp_port &&
+            data.smtp_username?.trim() &&
+            data.smtp_from_address?.trim() &&
+            data.smtp_from_name?.trim() &&
+            data.notification_email?.trim()
+        );
+    };
 
     const handleTestEmail = () => {
         setTestingEmail(true);
@@ -154,7 +170,7 @@ export default function NotificationSettingsPage({ notificationSettings, availab
                                         />
                                         <Label htmlFor="email_enabled" className="flex items-center gap-2 cursor-pointer">
                                             <Mail className="h-4 w-4" />
-                                            Enable email notifications by default
+                                            Enable email notifications
                                         </Label>
                                     </div>
 
@@ -179,6 +195,8 @@ export default function NotificationSettingsPage({ notificationSettings, availab
                                         </div>
                                     )}
                                 </div>
+
+
 
                                 {/* Webhook Notifications (Disabled) */}
                                 <div className="space-y-4 opacity-50">
@@ -340,6 +358,73 @@ export default function NotificationSettingsPage({ notificationSettings, availab
                                                     <InputError message={errors.smtp_from_name} />
                                                 </div>
                                             </div>
+
+                                            {/* Send Test Email Button */}
+                                            <div className="pt-4 border-t">
+                                                <div className="flex items-center gap-2">
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        onClick={handleTestEmail}
+                                                        disabled={testingEmail || !isSmtpConfigValid()}
+                                                    >
+                                                        <Send className="h-4 w-4 mr-2" />
+                                                        {testingEmail ? 'Sending...' : 'Send test email'}
+                                                    </Button>
+                                                    {testEmailSent && (
+                                                        <Transition
+                                                            show={testEmailSent}
+                                                            enter="transition ease-in-out"
+                                                            enterFrom="opacity-0"
+                                                            leave="transition ease-in-out"
+                                                            leaveTo="opacity-0"
+                                                        >
+                                                            <p className="text-sm text-green-600">Test email sent!</p>
+                                                        </Transition>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-muted-foreground mt-2">
+                                                    Send a test email to verify your SMTP configuration is working correctly
+                                                </p>
+                                            </div>
+                                </CardContent>
+                            </Card>
+                        )}
+
+                        {/* Daily Status Notifications Card - Only show if email OR webhook is enabled */}
+                        {(data.default_email_enabled || data.default_webhook_enabled) && (
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Bell className="h-5 w-5" />
+                                        Daily status notifications
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Receive daily confirmation that your notification service is working
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="daily_notification"
+                                            checked={data.daily_notification_enabled}
+                                            onCheckedChange={(checked) => setData('daily_notification_enabled', checked as boolean)}
+                                        />
+                                        <Label htmlFor="daily_notification" className="flex items-center gap-2 cursor-pointer">
+                                            <Bell className="h-4 w-4" />
+                                            Enable daily status notifications
+                                        </Label>
+                                    </div>
+                                    <div className="ml-6">
+                                        <p className="text-xs text-muted-foreground">
+                                            Receive a daily email confirming your notification service is working and showing upcoming reminders
+                                        </p>
+                                        {data.daily_notification_enabled && data.last_daily_notification_sent_at && (
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                                Last sent: {new Date(data.last_daily_notification_sent_at).toLocaleString()}
+                                            </p>
+                                        )}
+                                    </div>
                                 </CardContent>
                             </Card>
                         )}
@@ -374,36 +459,11 @@ export default function NotificationSettingsPage({ notificationSettings, availab
                             </CardContent>
                         </Card>
 
-                        {/* Submit and Test Buttons */}
+                        {/* Submit Button */}
                         <div className="flex items-center gap-4">
                             <Button type="submit" disabled={processing}>
                                 Save changes
                             </Button>
-
-                            {data.default_email_enabled && (
-                                <div className="flex items-center gap-2">
-                                    <Button 
-                                        type="button" 
-                                        variant="outline"
-                                        onClick={handleTestEmail}
-                                        disabled={testingEmail || !data.notification_email || !data.smtp_host || !data.smtp_username || !data.smtp_from_address || !data.smtp_from_name}
-                                    >
-                                        <Send className="h-4 w-4 mr-2" />
-                                        {testingEmail ? 'Sending...' : 'Send test email'}
-                                    </Button>
-                                    {testEmailSent && (
-                                        <Transition
-                                            show={testEmailSent}
-                                            enter="transition ease-in-out"
-                                            enterFrom="opacity-0"
-                                            leave="transition ease-in-out"
-                                            leaveTo="opacity-0"
-                                        >
-                                            <p className="text-sm text-green-600">Test email sent!</p>
-                                        </Transition>
-                                    )}
-                                </div>
-                            )}
 
                             <Transition
                                 show={recentlySuccessful}

@@ -30,6 +30,8 @@ class User extends Authenticatable
         'notification_email',
         'webhook_url',
         'webhook_headers',
+        'daily_notification_enabled',
+        'last_daily_notification_sent_at',
         'default_currency_id',
         'enabled_currencies',
         'smtp_host',
@@ -69,6 +71,8 @@ class User extends Authenticatable
             'default_webhook_enabled' => 'boolean',
             'default_reminder_intervals' => 'array',
             'webhook_headers' => 'array',
+            'daily_notification_enabled' => 'boolean',
+            'last_daily_notification_sent_at' => 'datetime',
         ];
     }
 

@@ -39,6 +39,8 @@ class NotificationController extends Controller
                 'notification_email' => $user->notification_email ?? $user->email,
                 'webhook_url' => $user->webhook_url,
                 'webhook_headers' => $user->webhook_headers,
+                'daily_notification_enabled' => $user->daily_notification_enabled,
+                'last_daily_notification_sent_at' => $user->last_daily_notification_sent_at,
                 // SMTP settings (always required)
                 'smtp_host' => $user->smtp_host,
                 'smtp_port' => $user->smtp_port,
@@ -67,6 +69,7 @@ class NotificationController extends Controller
             'default_reminder_intervals.*' => 'integer|in:1,2,3,7,15,30',
             'webhook_url' => 'nullable|url',
             'webhook_headers' => 'nullable|array',
+            'daily_notification_enabled' => 'boolean',
         ];
 
         // If email is enabled, email address and SMTP settings are required

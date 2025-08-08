@@ -16,6 +16,14 @@ Schedule::command('reminders:send-scheduled')
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/scheduled-reminders.log'));
 
+// Daily Status Notifications - Sends daily confirmation emails
+// Runs hourly to check for users with daily notifications enabled at current hour
+Schedule::command('reminders:send-daily-status')
+    ->hourly()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/daily-notifications.log'));
+
 Schedule::command('reminders:process-pending')
     ->everyMinute()
     ->withoutOverlapping()
