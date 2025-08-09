@@ -18,7 +18,8 @@ Schedule::command('reminders:send-scheduled')
 
 // Daily Status Notifications - Sends daily confirmation emails
 // Runs hourly to check for users with daily notifications enabled at current hour
-Schedule::command('reminders:send-daily-status')
+// TEMPORARY: Using --testing flag for hourly notifications during development
+Schedule::command('reminders:send-daily-status --testing')
     ->hourly()
     ->withoutOverlapping()
     ->runInBackground()

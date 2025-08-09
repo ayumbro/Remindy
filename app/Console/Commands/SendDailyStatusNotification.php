@@ -7,7 +7,6 @@ use App\Services\UserMailer;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class SendDailyStatusNotification extends Command
@@ -18,46 +17,59 @@ class SendDailyStatusNotification extends Command
      * @var string
      */
     protected $signature = 'reminders:send-daily-status
-                            {--dry-run : Show what would be sent without actually sending}
-                            {--user= : Send notification only for a specific user ID}';
+                            {--user= : Send notification only for a specific user ID}
+                            {--testing : TEMPORARY: Send hourly for testing instead of daily}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Send daily status notifications to users to confirm the notification service is working';
+    protected $description = 'Send daily status notifications to users to confirm the notification service is working. Use --testing for hourly testing mode.';
 
     /**
      * Execute the console command.
      */
     public function handle(): int
     {
-        $dryRun = $this->option('dry-run');
         $userId = $this->option('user');
-        
-        $this->info('Processing daily status notifications...');
-        
-        if ($dryRun) {
-            $this->warn('DRY RUN MODE - No emails will actually be sent');
+        $testingMode = $this->option('testing'); // TEMPORARY: For testing purposes
+
+        $this->info($testingMode ? 'Processing status notifications (TESTING MODE - Hourly)...' : 'Processing daily status notifications...');
+
+        if ($testingMode) {
+            $this->warn('⚠️  TESTING MODE ENABLED - Sending real emails hourly for testing!');
+            $this->warn('⚠️  Remember to remove --testing flag for production daily mode.');
         }
 
         try {
             // Get current time in UTC
             $currentTimeUtc = Carbon::now('UTC');
             $currentHour = $currentTimeUtc->format('H:00:00');
-            
+
             $this->info("Current UTC time: {$currentTimeUtc->format('Y-m-d H:i:s')}");
-            $this->info("Checking for users with daily notifications enabled at: {$currentHour}");
-            
-            // Find users with daily notifications enabled whose notification time matches current hour
-            $usersQuery = User::where('daily_notification_enabled', true)
-                ->where('notification_time_utc', 'LIKE', $currentHour . '%')
-                ->where(function ($query) {
-                    // Either never sent or sent more than 20 hours ago
+
+            // Find users with daily notifications enabled
+            $usersQuery = User::where('daily_notification_enabled', true);
+
+            if ($testingMode) {
+                // TESTING MODE: Send to all users with daily notifications enabled
+                // but only if they haven't received one in the last hour
+                $this->info("TESTING MODE: Checking for users with daily notifications enabled (sent more than 1 hour ago)");
+                $usersQuery->where(function ($query) {
                     $query->whereNull('last_daily_notification_sent_at')
-                        ->orWhere('last_daily_notification_sent_at', '<', Carbon::now()->subHours(20));
+                        ->orWhere('last_daily_notification_sent_at', '<', Carbon::now()->subHour());
                 });
+            } else {
+                // Normal daily mode - check notification time and 20-hour window
+                $this->info("Checking for users with daily notifications enabled at: {$currentHour}");
+                $usersQuery->where('notification_time_utc', 'LIKE', $currentHour . '%')
+                    ->where(function ($query) {
+                        // Either never sent or sent more than 20 hours ago
+                        $query->whereNull('last_daily_notification_sent_at')
+                            ->orWhere('last_daily_notification_sent_at', '<', Carbon::now()->subHours(20));
+                    });
+            }
             
             if ($userId) {
                 $usersQuery->where('id', $userId);
@@ -80,18 +92,16 @@ class SendDailyStatusNotification extends Command
                 $this->info("Processing daily notification for user: {$user->email}");
                 
                 // Check if user has SMTP configuration
-                if (!$user->hasSmtpConfig() && !$dryRun) {
+                if (!$user->hasSmtpConfig()) {
                     $this->warn("  Skipping - User does not have SMTP configuration");
                     continue;
                 }
-                
-                if ($this->sendDailyNotification($user, $dryRun)) {
+
+                if ($this->sendDailyNotification($user)) {
                     $successCount++;
-                    
+
                     // Update last sent timestamp
-                    if (!$dryRun) {
-                        $user->update(['last_daily_notification_sent_at' => Carbon::now()]);
-                    }
+                    $user->update(['last_daily_notification_sent_at' => Carbon::now()]);
                 } else {
                     $failureCount++;
                 }
@@ -104,7 +114,7 @@ class SendDailyStatusNotification extends Command
             }
             
             Log::info('Daily status notifications processed', [
-                'dry_run' => $dryRun,
+                'testing_mode' => $testingMode,
                 'current_hour_utc' => $currentHour,
                 'users_processed' => $users->count(),
                 'success_count' => $successCount,
@@ -128,17 +138,12 @@ class SendDailyStatusNotification extends Command
     /**
      * Send daily notification to a user.
      */
-    private function sendDailyNotification(User $user, bool $dryRun): bool
+    private function sendDailyNotification(User $user): bool
     {
         $this->info(sprintf(
-            '  - %s daily notification to %s',
-            $dryRun ? '[DRY RUN]' : 'Sending',
+            '  - Sending daily notification to %s',
             $user->getEffectiveNotificationEmail()
         ));
-        
-        if ($dryRun) {
-            return true;
-        }
         
         try {
             // Get subscription statistics

@@ -6,7 +6,6 @@ import { FormEventHandler, useState } from 'react';
 
 import HeadingSmall from '@/components/heading-small';
 import InputError from '@/components/input-error';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -41,6 +40,7 @@ interface NotificationSettings {
     smtp_encryption: string | null;
     smtp_from_address: string | null;
     smtp_from_name: string | null;
+    [key: string]: any; // Add index signature for form compatibility
 }
 
 interface AvailableInterval {
@@ -107,7 +107,20 @@ export default function NotificationSettingsPage({ notificationSettings, availab
     const handleTestEmail = () => {
         setTestingEmail(true);
         setTestEmailSent(false);
-        router.post(route('settings.notifications.test-email'), data, {
+
+        // Only send the fields required for test email
+        const testEmailData = {
+            notification_email: data.notification_email,
+            smtp_host: data.smtp_host,
+            smtp_port: data.smtp_port,
+            smtp_username: data.smtp_username,
+            smtp_password: data.smtp_password,
+            smtp_encryption: data.smtp_encryption,
+            smtp_from_address: data.smtp_from_address,
+            smtp_from_name: data.smtp_from_name,
+        };
+
+        router.post(route('settings.notifications.test-email'), testEmailData, {
             preserveScroll: true,
             onSuccess: () => {
                 setTestEmailSent(true);
@@ -150,7 +163,7 @@ export default function NotificationSettingsPage({ notificationSettings, availab
                                     <Input
                                         id="notification_time"
                                         type="time"
-                                        value={data.notification_time_utc.substring(0, 5)}
+                                        value={data.notification_time_utc ? data.notification_time_utc.substring(0, 5) : '09:00'}
                                         onChange={(e) => setData('notification_time_utc', e.target.value + ':00')}
                                         className="max-w-xs"
                                     />
