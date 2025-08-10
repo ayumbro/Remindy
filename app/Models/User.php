@@ -154,7 +154,23 @@ class User extends Authenticatable
      */
     public function hasSmtpConfig(): bool
     {
-        return ! empty($this->smtp_host) && ! empty($this->smtp_port);
+        if (empty($this->smtp_host) || empty($this->smtp_port)) {
+            return false;
+        }
+
+        // Check if password can be decrypted (handle encryption key changes)
+        try {
+            $password = $this->smtp_password;
+            return !empty($password);
+        } catch (\Exception $e) {
+            // Log the encryption error for debugging
+            \Illuminate\Support\Facades\Log::warning('SMTP password decryption failed for user', [
+                'user_id' => $this->id,
+                'email' => $this->email,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
     }
 
     /**
@@ -163,11 +179,18 @@ class User extends Authenticatable
      */
     public function getSmtpConfig(): array
     {
+        // Try to decrypt password, throw exception if it fails
+        try {
+            $password = $this->smtp_password;
+        } catch (\Exception) {
+            throw new \Exception('SMTP password cannot be decrypted. Please re-enter your SMTP password in settings.');
+        }
+
         return [
             'host' => $this->smtp_host,
             'port' => $this->smtp_port,
             'username' => $this->smtp_username,
-            'password' => $this->smtp_password,
+            'password' => $password,
             'encryption' => $this->smtp_encryption,
             'from_address' => $this->smtp_from_address ?: $this->email,
             'from_name' => $this->smtp_from_name ?: $this->name,

@@ -30,19 +30,12 @@ class ProcessFailedNotificationsCommand extends Command
     {
         $dryRun = $this->option('dry-run');
 
-        $this->info('Processing failed notifications...');
-
-        if ($dryRun) {
-            $this->warn('DRY RUN MODE - No notifications will actually be processed');
-        }
-
         try {
             if (! $dryRun) {
                 ProcessFailedNotifications::dispatch();
-                $this->info('Failed notifications processing job dispatched');
-            } else {
-                $this->info('[DRY RUN] Would dispatch failed notifications processing job');
+                $this->line('[' . now()->format('H:i') . '] Failed notifications job dispatched');
             }
+            // Silent for dry run to reduce noise
 
             Log::info('Process failed notifications command completed', [
                 'dry_run' => $dryRun,

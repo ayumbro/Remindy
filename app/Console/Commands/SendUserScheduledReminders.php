@@ -48,24 +48,18 @@ class SendUserScheduledReminders extends Command
             $currentTimeUtc = Carbon::now('UTC');
             $currentHour = $currentTimeUtc->format('H:00:00');
             
-            $this->info("Current UTC time: {$currentTimeUtc->format('Y-m-d H:i:s')}");
-            $this->info("Checking for users with notification time: {$currentHour}");
-            
             // Find users whose notification time matches current hour
             $usersQuery = User::where('notification_time_utc', 'LIKE', $currentHour . '%');
-            
+
             if ($userId) {
                 $usersQuery->where('id', $userId);
             }
-            
+
             $users = $usersQuery->get();
-            
+
             if ($users->isEmpty()) {
-                $this->info('No users scheduled for notifications at this time.');
-                return self::SUCCESS;
+                return self::SUCCESS; // Silent when no users
             }
-            
-            $this->info(sprintf('Found %d user(s) scheduled for notifications', $users->count()));
             
             $totalReminders = 0;
             $successCount = 0;
@@ -73,12 +67,9 @@ class SendUserScheduledReminders extends Command
             
             // Process each user
             foreach ($users as $user) {
-                $this->info("Processing reminders for user: {$user->email}");
-                
                 // Check if user has SMTP configuration
                 if (!$user->hasSmtpConfig() && !$dryRun) {
-                    $this->warn("  Skipping - User does not have SMTP configuration");
-                    continue;
+                    continue; // Skip silently
                 }
                 
                 // Get active subscriptions with notifications enabled
@@ -105,14 +96,9 @@ class SendUserScheduledReminders extends Command
                 }
             }
             
-            if ($totalReminders === 0) {
-                $this->info('No reminders to send at this time.');
-            } else {
-                $this->info("Total reminders processed: $totalReminders");
-                $this->info("Successfully sent: $successCount");
-                if ($failureCount > 0) {
-                    $this->warn("Failed to send: $failureCount");
-                }
+            // Only log when there's activity or failures
+            if ($totalReminders > 0) {
+                $this->line("[{$currentTimeUtc->format('H:i')}] Reminders: {$successCount} sent, {$failureCount} failed");
             }
             
             Log::info('User-scheduled reminders processed', [
@@ -186,13 +172,8 @@ class SendUserScheduledReminders extends Command
         $daysBefore = $reminder['days_before'];
         $dueDate = $reminder['due_date'];
         
-        $this->info(sprintf(
-            '  - %s: %s for %s (due in %d days)',
-            $dryRun ? '[DRY RUN]' : 'Sending',
-            $subscription->name,
-            $user->email,
-            $daysBefore
-        ));
+        // Compact logging - only show essential info
+        $this->line("  {$subscription->name} → {$user->email} ({$daysBefore}d)");
         
         if ($dryRun) {
             return true;
@@ -214,7 +195,7 @@ class SendUserScheduledReminders extends Command
             // Send using user's SMTP settings
             UserMailer::send($user, $mailable);
             
-            $this->info("    ✓ Email sent successfully");
+            // Success logged silently to reduce noise
             
             Log::info('Subscription reminder sent', [
                 'user_id' => $user->id,
@@ -226,7 +207,7 @@ class SendUserScheduledReminders extends Command
             return true;
             
         } catch (\Exception $e) {
-            $this->error("    ✗ Failed to send: {$e->getMessage()}");
+            $this->error("    ✗ {$e->getMessage()}");
             
             Log::error('Failed to send subscription reminder', [
                 'user_id' => $user->id,

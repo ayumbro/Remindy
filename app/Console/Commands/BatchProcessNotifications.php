@@ -45,16 +45,13 @@ Examples:
         // Get duplicate window from environment variable
         $duplicateWindowHours = (int) env('NOTIFICATION_DUPLICATE_WINDOW', 23);
 
-        $this->info('Starting batch notification processing...');
+        // Compact logging - only log significant events
+        $currentTime = now()->format('H:i:s');
+        $mode = $dryRun ? 'DRY_RUN' : ($duplicateWindowHours === 0 ? 'TESTING' : 'LIVE');
 
-        if ($dryRun) {
-            $this->warn('DRY RUN MODE - No jobs will be queued or processed');
-        }
-
-        if ($duplicateWindowHours === 0) {
-            $this->warn('TESTING MODE - Duplicate prevention disabled (NOTIFICATION_DUPLICATE_WINDOW=0)');
-        } else {
-            $this->info("Duplicate prevention: {$duplicateWindowHours} hours (NOTIFICATION_DUPLICATE_WINDOW)");
+        // Only output mode info on first run or when mode changes
+        if ($dryRun || $duplicateWindowHours === 0) {
+            $this->line("[$currentTime] Mode: $mode");
         }
 
         $dailyJobsQueued = 0;
@@ -73,20 +70,16 @@ Examples:
 
             $totalJobs = $dailyJobsQueued + $reminderJobsQueued;
 
-            if ($totalJobs === 0) {
-                $this->info('No notifications to process at this time.');
-                return self::SUCCESS;
-            }
+            // Only log when there's activity to reduce noise
+            if ($totalJobs > 0) {
+                $this->line("[$currentTime] Queued: {$dailyJobsQueued}d/{$reminderJobsQueued}r");
 
-            $this->info("Queued {$totalJobs} notification jobs ({$dailyJobsQueued} daily, {$reminderJobsQueued} reminders)");
-
-            // Process all queued jobs if not in dry-run mode
-            if (!$dryRun) {
-                $this->info('Processing queued jobs...');
-                $this->processQueuedJobs($totalJobs);
-            } else {
-                $this->info('[DRY RUN] Would process all queued jobs');
+                if (!$dryRun) {
+                    $this->processQueuedJobs();
+                    $this->line("[$currentTime] Processed: $totalJobs jobs");
+                }
             }
+            // Silent when no jobs to reduce log noise
 
             Log::info('Batch notification processing completed', [
                 'daily_jobs_queued' => $dailyJobsQueued,
@@ -114,7 +107,6 @@ Examples:
     private function queueDailyStatusNotifications(bool $dryRun): int
     {
         $currentTime = Carbon::now('UTC');
-        $currentTimeStr = $currentTime->format('H:i:00');
 
         // Create a tolerance window (check current minute and previous 2 minutes)
         $timeWindow = [
@@ -122,9 +114,6 @@ Examples:
             $currentTime->copy()->subMinute()->format('H:i:00'), // 1 minute ago
             $currentTime->copy()->subMinutes(2)->format('H:i:00'), // 2 minutes ago
         ];
-
-        $this->info("Checking for daily status notifications at: {$currentTimeStr} (with 2-minute tolerance)");
-        $this->info("Time window: " . implode(', ', $timeWindow));
 
         // Find users with daily notifications enabled within the time window
         $users = User::where('daily_notification_enabled', true)
@@ -141,34 +130,26 @@ Examples:
         $duplicateWindowHours = (int) env('NOTIFICATION_DUPLICATE_WINDOW', 23);
 
         // Filter out users who already received a notification within the duplicate window
-        // to prevent duplicate notifications due to tolerance window
         $duplicateThreshold = null;
         if ($duplicateWindowHours > 0) {
             $duplicateThreshold = Carbon::now('UTC')->subHours($duplicateWindowHours);
-            $this->info("  Duplicate prevention: Checking for notifications sent after {$duplicateThreshold->format('Y-m-d H:i:s')}");
-        } else {
-            $this->info("  Duplicate prevention: DISABLED (testing mode)");
         }
 
         foreach ($users as $user) {
             if (!$user->hasSmtpConfig()) {
-                $this->warn("  Skipping {$user->email} - No SMTP configuration");
-                continue;
+                continue; // Skip silently to reduce noise
             }
 
             // Check if user already received a notification within the duplicate window
             if ($duplicateWindowHours > 0 &&
                 $user->last_daily_notification_sent_at &&
                 $user->last_daily_notification_sent_at > $duplicateThreshold) {
-                $this->info("  Skipping {$user->email} - Already received notification within {$duplicateWindowHours}h ({$user->last_daily_notification_sent_at->format('H:i')})");
-                continue;
+                continue; // Skip silently to reduce noise
             }
 
-            if ($dryRun) {
-                $this->info("  [DRY RUN] Would queue daily status notification for: {$user->email} (scheduled: {$user->notification_time_utc})");
-            } else {
+            if (!$dryRun) {
                 SendDailyStatusNotificationJob::dispatch($user->id);
-                $this->info("  Queued daily status notification for: {$user->email} (scheduled: {$user->notification_time_utc})");
+                $this->line("  Daily: {$user->email}");
             }
 
             $jobsQueued++;
@@ -192,8 +173,6 @@ Examples:
             $currentTime->copy()->subMinutes(2)->format('H:i:00'), // 2 minutes ago
         ];
 
-        $this->info("Checking for subscription reminders at user notification times: " . implode(', ', $timeWindow));
-
         // Get users whose notification time matches the current window
         $eligibleUsers = User::where(function ($query) use ($timeWindow) {
             foreach ($timeWindow as $time) {
@@ -202,11 +181,8 @@ Examples:
         })->pluck('id')->toArray();
 
         if (empty($eligibleUsers)) {
-            $this->info("  No users have notification times in current window");
-            return 0;
+            return 0; // Silent when no users to reduce noise
         }
-
-        $this->info("  Found " . count($eligibleUsers) . " users with notification times in current window");
 
         // Get subscriptions for eligible users only
         $subscriptions = Subscription::with('user')
@@ -287,10 +263,8 @@ Examples:
     /**
      * Process all queued jobs and wait for completion.
      */
-    private function processQueuedJobs(int $expectedJobs): void
+    private function processQueuedJobs(): void
     {
-        $this->info("Processing {$expectedJobs} queued job(s)...");
-
         // Process jobs from the notifications queue
         $exitCode = Artisan::call('queue:work', [
             '--queue' => 'notifications',
@@ -298,9 +272,8 @@ Examples:
             '--timeout' => 300, // 5 minutes max
         ]);
 
-        if ($exitCode === 0) {
-            $this->info('✓ All queued jobs processed successfully');
-        } else {
+        // Only log failures to reduce noise
+        if ($exitCode !== 0) {
             $this->error('✗ Some jobs may have failed during processing');
         }
     }
