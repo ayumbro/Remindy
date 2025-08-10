@@ -25,7 +25,7 @@ class SendDailyStatusNotification extends Command
      *
      * @var string
      */
-    protected $description = 'Send daily status notifications to users to confirm the notification service is working. Use --testing for hourly testing mode.';
+    protected $description = 'Send daily status notifications synchronously to users to confirm the notification service is working. Use --testing for hourly testing mode.';
 
     /**
      * Execute the console command.
@@ -45,9 +45,31 @@ class SendDailyStatusNotification extends Command
         try {
             // Get current time in UTC
             $currentTimeUtc = Carbon::now('UTC');
-            $currentHour = $currentTimeUtc->format('H:00:00');
+            $currentTime = $currentTimeUtc->format('H:i:00'); // Match exact hour:minute
 
             $this->info("Current UTC time: {$currentTimeUtc->format('Y-m-d H:i:s')}");
+            Log::info('Daily status notification check started', [
+                'current_utc_time' => $currentTimeUtc->format('Y-m-d H:i:s'),
+                'current_time' => $currentTime,
+                'testing_mode' => $testingMode,
+                'user_id_filter' => $userId,
+            ]);
+
+            // First, let's see all users with daily notifications enabled
+            $allDailyUsers = User::where('daily_notification_enabled', true)->get();
+            $this->info("Total users with daily notifications enabled: {$allDailyUsers->count()}");
+            Log::info('Users with daily notifications enabled', [
+                'total_count' => $allDailyUsers->count(),
+                'users' => $allDailyUsers->map(function ($user) {
+                    return [
+                        'id' => $user->id,
+                        'email' => $user->email,
+                        'notification_time_utc' => $user->notification_time_utc,
+                        'last_daily_notification_sent_at' => $user->last_daily_notification_sent_at?->format('Y-m-d H:i:s'),
+                        'has_smtp_config' => $user->hasSmtpConfig(),
+                    ];
+                })->toArray(),
+            ]);
 
             // Find users with daily notifications enabled
             $usersQuery = User::where('daily_notification_enabled', true);
@@ -56,44 +78,88 @@ class SendDailyStatusNotification extends Command
                 // TESTING MODE: Send to all users with daily notifications enabled
                 // but only if they haven't received one in the last hour
                 $this->info("TESTING MODE: Checking for users with daily notifications enabled (sent more than 1 hour ago)");
-                $usersQuery->where(function ($query) {
+                $oneHourAgo = Carbon::now()->subHour();
+                $this->info("One hour ago threshold: {$oneHourAgo->format('Y-m-d H:i:s')}");
+                Log::info('Testing mode filters', [
+                    'one_hour_ago_threshold' => $oneHourAgo->format('Y-m-d H:i:s'),
+                ]);
+
+                $usersQuery->where(function ($query) use ($oneHourAgo) {
                     $query->whereNull('last_daily_notification_sent_at')
-                        ->orWhere('last_daily_notification_sent_at', '<', Carbon::now()->subHour());
+                        ->orWhere('last_daily_notification_sent_at', '<', $oneHourAgo);
                 });
             } else {
-                // Normal daily mode - check notification time and 20-hour window
-                $this->info("Checking for users with daily notifications enabled at: {$currentHour}");
-                $usersQuery->where('notification_time_utc', 'LIKE', $currentHour . '%')
-                    ->where(function ($query) {
-                        // Either never sent or sent more than 20 hours ago
-                        $query->whereNull('last_daily_notification_sent_at')
-                            ->orWhere('last_daily_notification_sent_at', '<', Carbon::now()->subHours(20));
-                    });
+                // Normal daily mode - check notification time only (no time window restriction)
+                $this->info("Checking for users with daily notifications enabled at: {$currentTime}");
+                Log::info('Normal mode filters', [
+                    'target_time' => $currentTime,
+                    'note' => 'No time window restriction - users can receive notifications whenever their time matches',
+                ]);
+
+                $usersQuery->where('notification_time_utc', 'LIKE', $currentTime . '%');
             }
-            
+
             if ($userId) {
                 $usersQuery->where('id', $userId);
+                $this->info("Filtering for specific user ID: {$userId}");
+                Log::info('User ID filter applied', ['user_id' => $userId]);
             }
-            
+
+            // Log the SQL query for debugging
+            $sql = $usersQuery->toSql();
+            $bindings = $usersQuery->getBindings();
+            $this->info("SQL Query: {$sql}");
+            $this->info("Bindings: " . json_encode($bindings));
+            Log::info('Query details', [
+                'sql' => $sql,
+                'bindings' => $bindings,
+            ]);
+
             $users = $usersQuery->get();
-            
+
+            $this->info("Query returned {$users->count()} user(s)");
+            Log::info('Query results', [
+                'matching_users_count' => $users->count(),
+                'matching_users' => $users->map(function ($user) {
+                    return [
+                        'id' => $user->id,
+                        'email' => $user->email,
+                        'notification_time_utc' => $user->notification_time_utc,
+                        'last_daily_notification_sent_at' => $user->last_daily_notification_sent_at?->format('Y-m-d H:i:s'),
+                        'has_smtp_config' => $user->hasSmtpConfig(),
+                    ];
+                })->toArray(),
+            ]);
+
             if ($users->isEmpty()) {
                 $this->info('No users scheduled for daily status notifications at this time.');
+                Log::info('No users found for daily status notifications');
                 return self::SUCCESS;
             }
             
             $this->info(sprintf('Found %d user(s) scheduled for daily status notifications', $users->count()));
-            
+
             $successCount = 0;
             $failureCount = 0;
-            
+
             // Process each user
             foreach ($users as $user) {
                 $this->info("Processing daily notification for user: {$user->email}");
-                
+                Log::info('Processing user for daily notification', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'notification_time_utc' => $user->notification_time_utc,
+                    'last_daily_notification_sent_at' => $user->last_daily_notification_sent_at?->format('Y-m-d H:i:s'),
+                    'has_smtp_config' => $user->hasSmtpConfig(),
+                ]);
+
                 // Check if user has SMTP configuration
                 if (!$user->hasSmtpConfig()) {
                     $this->warn("  Skipping - User does not have SMTP configuration");
+                    Log::warning('User skipped - no SMTP configuration', [
+                        'user_id' => $user->id,
+                        'email' => $user->email,
+                    ]);
                     continue;
                 }
 
@@ -101,9 +167,20 @@ class SendDailyStatusNotification extends Command
                     $successCount++;
 
                     // Update last sent timestamp
-                    $user->update(['last_daily_notification_sent_at' => Carbon::now()]);
+                    $newTimestamp = Carbon::now();
+                    $user->update(['last_daily_notification_sent_at' => $newTimestamp]);
+                    $this->info("  Updated last_daily_notification_sent_at to: {$newTimestamp->format('Y-m-d H:i:s')}");
+                    Log::info('Daily notification sent successfully', [
+                        'user_id' => $user->id,
+                        'email' => $user->email,
+                        'last_daily_notification_sent_at' => $newTimestamp->format('Y-m-d H:i:s'),
+                    ]);
                 } else {
                     $failureCount++;
+                    Log::error('Failed to send daily notification', [
+                        'user_id' => $user->id,
+                        'email' => $user->email,
+                    ]);
                 }
             }
             
@@ -115,7 +192,7 @@ class SendDailyStatusNotification extends Command
             
             Log::info('Daily status notifications processed', [
                 'testing_mode' => $testingMode,
-                'current_hour_utc' => $currentHour,
+                'current_time_utc' => $currentTime,
                 'users_processed' => $users->count(),
                 'success_count' => $successCount,
                 'failure_count' => $failureCount,

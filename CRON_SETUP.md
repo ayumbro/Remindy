@@ -25,20 +25,54 @@ crontab -e
 #### What This Runs
 - **Hourly Tasks:**
   - `reminders:send-scheduled` - Sends reminders at users' preferred notification times
-  - `reminders:create-schedules` - Creates reminder schedules for subscriptions
-  
+
 - **Every Minute:**
-  - `reminders:process-pending` - Processes pending reminder notifications
-  
+  - `notifications:batch-process` - **NEW BATCH APPROACH**: Queues all notifications and processes them immediately
+
 - **Every 15 Minutes:**
   - `reminders:process-failed` - Retries failed notification attempts
-  
+
 - **Daily Tasks:**
   - `queue:prune-batches` - Cleans up old batch jobs (at 2:00 AM)
   - `queue:prune-failed` - Removes week-old failed jobs (at 2:30 AM)
 
-### 2. Queue Worker
-The queue worker processes background jobs immediately as they're dispatched.
+### 2. Queue Worker (Optional with Batch Processing)
+**NEW APPROACH**: The batch processing system (`notifications:batch-process`) queues all notifications and processes them immediately within the same command execution. This means **no persistent queue worker is required**.
+
+**How it works:**
+1. Every minute: `schedule:run` executes `notifications:batch-process`
+2. Command queues all pending notifications (daily status + subscription reminders)
+3. Command immediately processes all queued jobs using `queue:work --stop-when-empty`
+4. Command exits, freeing up resources
+
+**Benefits:**
+- ✅ No persistent queue worker needed
+- ✅ Predictable processing every minute
+- ✅ Fresh process each time (no memory leaks)
+- ✅ Easier monitoring and debugging
+- ✅ Simple environment variable configuration
+
+**Configuration:**
+Set the duplicate prevention window in your `.env` file:
+```bash
+# Default: 23 hours (prevents multiple daily notifications)
+NOTIFICATION_DUPLICATE_WINDOW=23
+
+# Testing: 0 hours (allows multiple notifications for testing)
+NOTIFICATION_DUPLICATE_WINDOW=0
+```
+
+**Testing Commands:**
+```bash
+# Normal processing (uses NOTIFICATION_DUPLICATE_WINDOW from .env)
+php artisan notifications:batch-process
+
+# Dry run (see what would be processed)
+php artisan notifications:batch-process --dry-run
+
+# Daily notifications only
+php artisan notifications:batch-process --daily-only
+```
 
 ## Installation Methods
 

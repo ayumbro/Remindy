@@ -3,15 +3,13 @@
 namespace App\Mail;
 
 use App\Models\User;
-use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Queue\SerializesModels;
 
 class DailyStatusNotification extends Mailable
 {
-    use Queueable, SerializesModels;
+    // Note: Queue traits removed - daily status notifications run synchronously
 
     /**
      * Create a new message instance.

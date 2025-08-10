@@ -16,26 +16,36 @@ Schedule::command('reminders:send-scheduled')
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/scheduled-reminders.log'));
 
-// Daily Status Notifications - Sends daily confirmation emails
-// Runs hourly to check for users with daily notifications enabled at current hour
-// TEMPORARY: Using --testing flag for hourly notifications during development
-Schedule::command('reminders:send-daily-status --testing')
-    ->hourly()
-    ->withoutOverlapping()
-    ->runInBackground()
-    ->appendOutputTo(storage_path('logs/daily-notifications.log'));
-
-Schedule::command('reminders:process-pending')
+// BATCH PROCESSING APPROACH - Queue all notifications and process them in batch
+// Runs every minute to queue notifications and process them immediately
+// Duplicate window controlled by NOTIFICATION_DUPLICATE_WINDOW environment variable (default: 23 hours)
+Schedule::command('notifications:batch-process')
     ->everyMinute()
     ->withoutOverlapping()
     ->runInBackground()
-    ->appendOutputTo(storage_path('logs/reminders.log'));
+    ->appendOutputTo(storage_path('logs/batch-notifications.log'));
 
-Schedule::command('reminders:create-schedules')
-    ->hourly()
-    ->withoutOverlapping()
-    ->runInBackground()
-    ->appendOutputTo(storage_path('logs/reminder-schedules.log'));
+// LEGACY COMMANDS (commented out - replaced by batch processing)
+// Daily Status Notifications - Sends daily confirmation emails synchronously (no queue)
+// Runs every minute to check for users with daily notifications enabled at exact time
+// TEMPORARY: Using --testing flag for hourly notifications during development
+// Schedule::command('reminders:send-daily-status --testing')
+//     ->everyMinute()
+//     ->withoutOverlapping()
+//     ->runInBackground()
+//     ->appendOutputTo(storage_path('logs/daily-notifications.log'));
+
+// Schedule::command('reminders:process-pending')
+//     ->everyMinute()
+//     ->withoutOverlapping()
+//     ->runInBackground()
+//     ->appendOutputTo(storage_path('logs/reminders.log'));
+
+// Schedule::command('reminders:create-schedules')
+//     ->hourly()
+//     ->withoutOverlapping()
+//     ->runInBackground()
+//     ->appendOutputTo(storage_path('logs/reminder-schedules.log'));
 
 Schedule::command('reminders:process-failed')
     ->everyFifteenMinutes()
