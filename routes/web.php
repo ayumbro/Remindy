@@ -29,6 +29,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('subscriptions/{subscription}/mark-paid', [SubscriptionController::class, 'markAsPaid'])
         ->name('subscriptions.mark-paid');
 
+    // Payment creation and editing routes
+    Route::get('subscriptions/{subscription}/payments/create', [SubscriptionController::class, 'createPayment'])
+        ->name('subscriptions.payments.create');
+    Route::get('subscriptions/{subscription}/payments/{payment}/edit', [SubscriptionController::class, 'editPayment'])
+        ->name('subscriptions.payments.edit');
+
     Route::resource('categories', CategoryController::class);
     Route::resource('payment-methods', PaymentMethodController::class);
 

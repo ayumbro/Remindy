@@ -1,17 +1,11 @@
-import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { DatePickerInput } from '@/components/ui/date-picker';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { formatDate } from '@/lib/utils';
 import { type BreadcrumbItem, type SharedData } from '@/types';
-import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Edit, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -51,41 +45,11 @@ interface Subscription {
     }>;
 }
 
-interface PaymentMethod {
-    id: number;
-    name: string;
-}
-
-interface Currency {
-    id: number;
-    code: string;
-    symbol: string;
-    name: string;
-}
-
 interface SubscriptionShowProps {
     subscription: Subscription;
-    paymentMethods: PaymentMethod[];
-    currencies: Currency[];
 }
 
-interface PaymentForm {
-    amount: string;
-    payment_date: string;
-    payment_method_id: string;
-    currency_id: string;
-    notes: string;
-    attachments: File[];
-}
-
-interface ExistingAttachment {
-    id: number;
-    original_name: string;
-    file_size: number;
-    file_type: string;
-}
-
-export default function SubscriptionShow({ subscription, paymentMethods, currencies }: SubscriptionShowProps) {
+export default function SubscriptionShow({ subscription }: SubscriptionShowProps) {
     const { auth } = usePage<SharedData>().props;
     const userDateFormat = auth.user?.date_format || 'Y-m-d';
     const [paymentToDelete, setPaymentToDelete] = useState<{
@@ -94,10 +58,7 @@ export default function SubscriptionShow({ subscription, paymentMethods, currenc
         payment_date: string;
         currency: { symbol: string; code: string };
     } | null>(null);
-    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-    const [editingPayment, setEditingPayment] = useState<any>(null);
-    const [existingAttachments, setExistingAttachments] = useState<ExistingAttachment[]>([]);
-    const [attachmentsToRemove, setAttachmentsToRemove] = useState<number[]>([]);
+
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -164,315 +125,15 @@ export default function SubscriptionShow({ subscription, paymentMethods, currenc
     // Show Mark Paid button only if subscription hasn't ended
     const shouldShowMarkPaidButton = !isSubscriptionEnded;
 
-    // Form for payment modal
-    const { data, setData, post, put, processing, errors, reset } = useForm<PaymentForm>({
-        amount: '',
-        payment_date: new Date().toISOString().split('T')[0],
-        payment_method_id: '',
-        currency_id: subscription.currency_id.toString(), // Default to subscription's currency
-        notes: '',
-        attachments: [],
-    });
 
-    const openMarkPaidModal = () => {
-        setEditingPayment(null);
-        setExistingAttachments([]);
-        setAttachmentsToRemove([]);
-        reset();
-        setData({
-            amount: subscription.price.toString(),
-            payment_date: new Date().toISOString().split('T')[0],
-            payment_method_id: subscription.payment_method?.id?.toString() || '',
-            currency_id: subscription.currency_id.toString(), // Default to subscription's currency
-            notes: '',
-            attachments: [],
-        });
-        setIsPaymentModalOpen(true);
-    };
 
-    const openEditPaymentModal = (payment: any) => {
-        setEditingPayment(payment);
 
-        // Convert payment_date to YYYY-MM-DD format for HTML date input
-        let formattedDate = payment.payment_date;
-        if (payment.payment_date) {
-            // If payment_date is already in YYYY-MM-DD format, use it directly
-            // Otherwise, try to parse and format it
-            const date = new Date(payment.payment_date);
-            if (!isNaN(date.getTime())) {
-                formattedDate = date.toISOString().split('T')[0];
-            }
-        }
 
-        // Load existing attachments
-        const existingAttachmentsList = payment.attachments || [];
-        setExistingAttachments(existingAttachmentsList);
-        setAttachmentsToRemove([]);
 
-        // Ensure all fields have valid values
-        const paymentData = {
-            amount: payment.amount ? payment.amount.toString() : '',
-            payment_date: formattedDate || '',
-            payment_method_id: payment.payment_method?.id?.toString() || '',
-            currency_id: payment.currency?.id?.toString() || subscription.currency_id.toString(),
-            notes: payment.notes || '',
-            attachments: [], // This will hold new files to upload
-        };
 
-        setData(paymentData);
-        setIsPaymentModalOpen(true);
-    };
 
-    const closePaymentModal = () => {
-        setIsPaymentModalOpen(false);
-        setEditingPayment(null);
-        setExistingAttachments([]);
-        setAttachmentsToRemove([]);
-        reset();
-        // Ensure currency is reset to subscription's currency
-        setData('currency_id', subscription.currency_id.toString());
-    };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = Array.from(e.target.files || []);
-        setData('attachments', files);
-    };
 
-    const removeFile = (index: number) => {
-        const newFiles = data.attachments.filter((_, i) => i !== index);
-        setData('attachments', newFiles);
-    };
-
-    const removeExistingAttachment = (attachmentId: number) => {
-        setAttachmentsToRemove((prev) => [...prev, attachmentId]);
-        setExistingAttachments((prev) => prev.filter((att) => att.id !== attachmentId));
-    };
-
-    const restoreExistingAttachment = (attachmentId: number) => {
-        setAttachmentsToRemove((prev) => prev.filter((id) => id !== attachmentId));
-        // Find the attachment in the original payment data and restore it
-        if (editingPayment && editingPayment.attachments) {
-            const attachmentToRestore = editingPayment.attachments.find((att: any) => att.id === attachmentId);
-            if (attachmentToRestore) {
-                setExistingAttachments((prev) => [...prev, attachmentToRestore]);
-            }
-        }
-    };
-
-    const handleFileOperations = async (paymentHistoryId: number) => {
-        try {
-            // Handle attachment removals first
-            if (attachmentsToRemove.length > 0) {
-                for (const attachmentId of attachmentsToRemove) {
-                    await new Promise((resolve, reject) => {
-                        router.delete(`/payment-attachments/${attachmentId}`, {
-                            preserveState: true,
-                            preserveScroll: true,
-                            onSuccess: () => resolve(true),
-                            onError: (errors) => reject(errors),
-                        });
-                    });
-                }
-            }
-
-            // Handle new file uploads
-            if (data.attachments.length > 0) {
-                const formData = new FormData();
-                data.attachments.forEach((file, index) => {
-                    formData.append(`attachments[${index}]`, file);
-                });
-
-                await new Promise((resolve, reject) => {
-                    router.post(`/payment-histories/${paymentHistoryId}/attachments`, formData, {
-                        forceFormData: true,
-                        preserveState: true,
-                        preserveScroll: true,
-                        onSuccess: () => resolve(true),
-                        onError: (errors) => reject(errors),
-                    });
-                });
-            }
-
-            // Close modal after all operations complete
-            closePaymentModal();
-            // Refresh page to show updated data
-            setTimeout(() => window.location.reload(), 100);
-        } catch (error) {
-            console.error('File operations failed:', error);
-            alert('Payment updated, but there was an issue with file operations. Please try again.');
-        }
-    };
-
-    const formatFileSize = (bytes: number): string => {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    };
-
-    const handlePaymentSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-
-        // Client-side validation
-        if (!data.amount || data.amount.trim() === '' || parseFloat(data.amount) <= 0) {
-            alert('Please enter a valid amount greater than 0.');
-            return;
-        }
-        if (!data.payment_date || data.payment_date.trim() === '') {
-            alert('Please select a payment date.');
-            return;
-        }
-
-        // Validate payment date is not in the future
-        const selectedDate = new Date(data.payment_date);
-        const today = new Date();
-        today.setHours(23, 59, 59, 999); // Set to end of today
-
-        if (selectedDate > today) {
-            alert('Payment date cannot be in the future.');
-            return;
-        }
-
-        // Prepare data for submission
-        const submitData = {
-            amount: data.amount,
-            payment_date: data.payment_date,
-            payment_method_id: data.payment_method_id === 'none' ? '' : data.payment_method_id,
-            currency_id: data.currency_id,
-            notes: data.notes,
-        };
-
-        // Check if we need to use FormData (for file uploads only)
-        const hasNewFiles = data.attachments.length > 0;
-        const hasAttachmentsToRemove = editingPayment && attachmentsToRemove.length > 0;
-        const needsFormData = hasNewFiles; // Only use FormData for new files, not for removals
-
-        if (needsFormData) {
-            // Use FormData for file operations (both new payments and edits)
-            const formData = new FormData();
-
-            // Add HTTP method for Laravel (required for PUT with FormData)
-            if (editingPayment) {
-                formData.append('_method', 'PUT');
-            }
-
-            // Add form fields to FormData, ensuring no null/undefined values
-            Object.keys(submitData).forEach((key) => {
-                const value = submitData[key as keyof typeof submitData];
-                const finalValue = value !== null && value !== undefined ? value.toString() : '';
-                formData.append(key, finalValue);
-            });
-
-            // Add new files to form data
-            data.attachments.forEach((file, index) => {
-                formData.append(`attachments[${index}]`, file);
-            });
-
-            // Note: Attachment removals are handled separately via individual DELETE requests
-
-            if (editingPayment) {
-                // Update existing payment with FormData (use POST with _method=PUT)
-                post(`/payment-histories/${editingPayment.id}`, {
-                    data: formData,
-                    forceFormData: true,
-                    onSuccess: () => {
-                        // Handle file operations (removals) after successful payment update
-                        if (hasAttachmentsToRemove) {
-                            handleFileOperations(editingPayment.id);
-                        } else {
-                            closePaymentModal();
-                            setTimeout(() => window.location.reload(), 100);
-                        }
-                    },
-                    onError: (errors) => {
-                        console.error('Payment update failed:', errors);
-                        // Show specific error messages
-                        if (errors.payment_date) {
-                            alert(`Payment date error: ${errors.payment_date}`);
-                        } else if (errors.amount) {
-                            alert(`Amount error: ${errors.amount}`);
-                        } else {
-                            alert('Failed to update payment. Please check your input and try again.');
-                        }
-                    },
-                });
-            } else {
-                // Create new payment with FormData
-                post(`/subscriptions/${subscription.id}/mark-paid`, {
-                    data: formData,
-                    forceFormData: true,
-                    onSuccess: () => {
-                        closePaymentModal();
-                        // Force page refresh to ensure updated data is displayed
-                        window.location.reload();
-                    },
-                    onError: (errors) => {
-                        console.error('Payment creation failed:', errors);
-                        // Show specific error messages
-                        if (errors.payment_date) {
-                            alert(`Payment date error: ${errors.payment_date}`);
-                        } else if (errors.amount) {
-                            alert(`Amount error: ${errors.amount}`);
-                        } else {
-                            alert('Failed to create payment. Please check your input and try again.');
-                        }
-                    },
-                });
-            }
-        } else {
-            // No files involved, use regular form submission
-            if (editingPayment) {
-                // Note: Attachment removals are handled separately via individual DELETE requests
-
-                // Update existing payment without files
-                put(`/payment-histories/${editingPayment.id}`, {
-                    data: submitData,
-                    onSuccess: () => {
-                        // Handle file operations (removals and additions) after successful payment update
-                        if (hasAttachmentsToRemove || hasNewFiles) {
-                            handleFileOperations(editingPayment.id);
-                        } else {
-                            closePaymentModal();
-                            setTimeout(() => window.location.reload(), 100);
-                        }
-                    },
-                    onError: (errors) => {
-                        console.error('Payment update failed:', errors);
-                        // Show specific error messages
-                        if (errors.payment_date) {
-                            alert(`Payment date error: ${errors.payment_date}`);
-                        } else if (errors.amount) {
-                            alert(`Amount error: ${errors.amount}`);
-                        } else {
-                            alert('Failed to update payment. Please check your input and try again.');
-                        }
-                    },
-                });
-            } else {
-                // Create new payment without files
-                post(`/subscriptions/${subscription.id}/mark-paid`, {
-                    data: submitData,
-                    onSuccess: () => {
-                        closePaymentModal();
-                        // Force page refresh to ensure updated data is displayed
-                        window.location.reload();
-                    },
-                    onError: (errors) => {
-                        console.error('Payment creation failed:', errors);
-                        // Show specific error messages
-                        if (errors.payment_date) {
-                            alert(`Payment date error: ${errors.payment_date}`);
-                        } else if (errors.amount) {
-                            alert(`Amount error: ${errors.amount}`);
-                        } else {
-                            alert('Failed to create payment. Please check your input and try again.');
-                        }
-                    },
-                });
-            }
-        }
-    };
 
     if (!subscription) {
         return (
@@ -512,7 +173,11 @@ export default function SubscriptionShow({ subscription, paymentMethods, currenc
                                 Edit
                             </Link>
                         </Button>
-                        {shouldShowMarkPaidButton && <Button onClick={openMarkPaidModal}>Mark Paid</Button>}
+                        {shouldShowMarkPaidButton && (
+                            <Button asChild>
+                                <Link href={`/subscriptions/${subscription.id}/payments/create`}>Mark Paid</Link>
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -540,7 +205,7 @@ export default function SubscriptionShow({ subscription, paymentMethods, currenc
 
                             <div>
                                 <label className="text-muted-foreground text-sm font-medium">First Billing Date</label>
-                                <p>{formatDate(subscription.first_billing_date, userDateFormat)}</p>
+                                <p>{formatDate(subscription.next_billing_date, userDateFormat)}</p>
                             </div>
 
                             {/* Only show next billing date for active subscriptions */}
@@ -664,9 +329,11 @@ export default function SubscriptionShow({ subscription, paymentMethods, currenc
                                                         size="sm"
                                                         variant="outline"
                                                         className="text-blue-600 hover:text-blue-700"
-                                                        onClick={() => openEditPaymentModal(payment)}
+                                                        asChild
                                                     >
-                                                        <Edit className="h-3 w-3" />
+                                                        <Link href={`/subscriptions/${subscription.id}/payments/${payment.id}/edit`}>
+                                                            <Edit className="h-3 w-3" />
+                                                        </Link>
                                                     </Button>
                                                     {/* Only show delete button for the most recent payment (index 0) */}
                                                     {index === 0 && (
@@ -714,229 +381,7 @@ export default function SubscriptionShow({ subscription, paymentMethods, currenc
                     </DialogContent>
                 </Dialog>
 
-                {/* Payment Modal */}
-                <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
-                    <DialogContent className="max-w-md">
-                        <DialogHeader>
-                            <DialogTitle>{editingPayment ? 'Edit Payment Record' : 'Mark as Paid'}</DialogTitle>
-                            <DialogDescription>
-                                {editingPayment ? 'Update the payment record details below.' : 'Record a new payment for this subscription.'}
-                            </DialogDescription>
-                        </DialogHeader>
-                        <form onSubmit={handlePaymentSubmit} className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="payment-amount">Amount *</Label>
-                                <Input
-                                    id="payment-amount"
-                                    type="number"
-                                    step="0.01"
-                                    min="0.01"
-                                    required
-                                    value={data.amount}
-                                    onChange={(e) => setData('amount', e.target.value)}
-                                    disabled={processing}
-                                    placeholder="0.00"
-                                />
-                                <InputError message={errors.amount} />
-                            </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="payment-date">Payment Date *</Label>
-                                <DatePickerInput
-                                    id="payment-date"
-                                    name="payment_date"
-                                    required
-                                    max={new Date().toISOString().split('T')[0]}
-                                    value={data.payment_date}
-                                    onChange={(value) => setData('payment_date', value)}
-                                    disabled={processing}
-                                    error={!!errors.payment_date}
-                                    placeholder="Select payment date"
-                                />
-                                <InputError message={errors.payment_date} />
-                                <p className="text-muted-foreground text-xs">Payment date cannot be in the future</p>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="payment-method">Payment Method</Label>
-                                <Select value={data.payment_method_id} onValueChange={(value) => setData('payment_method_id', value)}>
-                                    <SelectTrigger id="payment-method">
-                                        <SelectValue placeholder="Select payment method" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="none">No payment method</SelectItem>
-                                        {paymentMethods.map((method) => (
-                                            <SelectItem key={method.id} value={method.id.toString()}>
-                                                {method.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <InputError message={errors.payment_method_id} />
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="payment-currency">Currency *</Label>
-                                <Select value={data.currency_id} onValueChange={(value) => setData('currency_id', value)}>
-                                    <SelectTrigger id="payment-currency">
-                                        <SelectValue placeholder="Select currency" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {currencies.map((currency) => (
-                                            <SelectItem key={currency.id} value={currency.id.toString()}>
-                                                {currency.code} ({currency.symbol}) - {currency.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <InputError message={errors.currency_id} />
-                                <p className="text-muted-foreground text-xs">Select the currency for this payment</p>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="payment-notes">Notes</Label>
-                                <Textarea
-                                    id="payment-notes"
-                                    value={data.notes}
-                                    onChange={(e) => setData('notes', e.target.value)}
-                                    disabled={processing}
-                                    placeholder="Optional notes about this payment"
-                                    rows={3}
-                                    maxLength={1000}
-                                />
-                                <InputError message={errors.notes} />
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="payment-attachments">{editingPayment ? 'Add New Attachments' : 'Attachments'}</Label>
-                                <Input
-                                    id="payment-attachments"
-                                    type="file"
-                                    multiple
-                                    accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx"
-                                    onChange={handleFileChange}
-                                    disabled={processing}
-                                />
-                                <p className="text-muted-foreground text-xs">
-                                    Upload invoices, receipts, or other payment-related documents. Max 5 files, 10MB each. Supported: PDF, Images,
-                                    Word, Excel.
-                                </p>
-                                <InputError message={errors.attachments} />
-
-                                {/* Display existing attachments (for edit mode) */}
-                                {editingPayment && existingAttachments.length > 0 && (
-                                    <div className="space-y-2">
-                                        <p className="text-sm font-medium">Existing Attachments:</p>
-                                        <div className="space-y-1">
-                                            {existingAttachments.map((attachment) => (
-                                                <div
-                                                    key={attachment.id}
-                                                    className="flex items-center justify-between rounded-md border bg-blue-50 p-2"
-                                                >
-                                                    <div className="flex items-center space-x-2">
-                                                        <span className="text-sm">{attachment.original_name}</span>
-                                                        <span className="text-muted-foreground text-xs">
-                                                            ({formatFileSize(attachment.file_size)})
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex items-center space-x-1">
-                                                        <a
-                                                            href={`/payment-attachments/${attachment.id}/download`}
-                                                            className="text-xs text-blue-600 underline hover:text-blue-800"
-                                                            title={`Download ${attachment.original_name}`}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                        >
-                                                            Download
-                                                        </a>
-                                                        <Button
-                                                            type="button"
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => removeExistingAttachment(attachment.id)}
-                                                            disabled={processing}
-                                                            className="text-red-500 hover:text-red-700"
-                                                        >
-                                                            Remove
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Display attachments marked for removal */}
-                                {editingPayment && attachmentsToRemove.length > 0 && (
-                                    <div className="space-y-2">
-                                        <p className="text-sm font-medium text-red-600">Attachments to be removed:</p>
-                                        <div className="space-y-1">
-                                            {attachmentsToRemove.map((attachmentId) => {
-                                                const attachment = editingPayment.attachments?.find((att: any) => att.id === attachmentId);
-                                                return attachment ? (
-                                                    <div
-                                                        key={attachmentId}
-                                                        className="flex items-center justify-between rounded-md border border-red-200 bg-red-50 p-2"
-                                                    >
-                                                        <div className="flex items-center space-x-2">
-                                                            <span className="text-sm text-red-600 line-through">{attachment.original_name}</span>
-                                                            <span className="text-xs text-red-500">(will be deleted)</span>
-                                                        </div>
-                                                        <Button
-                                                            type="button"
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => restoreExistingAttachment(attachmentId)}
-                                                            disabled={processing}
-                                                            className="text-blue-500 hover:text-blue-700"
-                                                        >
-                                                            Restore
-                                                        </Button>
-                                                    </div>
-                                                ) : null;
-                                            })}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Display selected files */}
-                                {data.attachments.length > 0 && (
-                                    <div className="space-y-2">
-                                        <p className="text-sm font-medium">Selected Files:</p>
-                                        <div className="space-y-1">
-                                            {data.attachments.map((file, index) => (
-                                                <div key={index} className="bg-muted flex items-center justify-between rounded-md p-2">
-                                                    <div className="flex items-center space-x-2">
-                                                        <span className="text-sm">{file.name}</span>
-                                                        <span className="text-muted-foreground text-xs">({formatFileSize(file.size)})</span>
-                                                    </div>
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => removeFile(index)}
-                                                        disabled={processing}
-                                                    >
-                                                        Remove
-                                                    </Button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            <DialogFooter>
-                                <Button type="button" variant="outline" onClick={closePaymentModal}>
-                                    Cancel
-                                </Button>
-                                <Button type="submit" disabled={processing}>
-                                    {editingPayment ? 'Update Payment' : 'Save Payment'}
-                                </Button>
-                            </DialogFooter>
-                        </form>
-                    </DialogContent>
-                </Dialog>
             </div>
         </AppLayout>
     );

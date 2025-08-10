@@ -287,12 +287,57 @@ class SubscriptionController extends Controller
             },
         ]);
 
-        // Load payment methods and currencies for the Mark Paid modal
+        return Inertia::render('subscriptions/show', [
+            'subscription' => $subscription,
+        ]);
+    }
+
+    /**
+     * Show the form for creating a new payment for the subscription.
+     */
+    public function createPayment(Subscription $subscription): Response
+    {
+        $this->authorize('view', $subscription);
+
+        // Load subscription relationships
+        $subscription->load(['currency', 'paymentMethod']);
+
+        // Load payment methods and currencies for the payment form
         $paymentMethods = $subscription->user->paymentMethods()->where('is_active', true)->get();
         $currencies = \App\Models\Currency::all();
 
-        return Inertia::render('subscriptions/show', [
+        return Inertia::render('subscriptions/payments/create', [
             'subscription' => $subscription,
+            'paymentMethods' => $paymentMethods,
+            'currencies' => $currencies,
+        ]);
+    }
+
+    /**
+     * Show the form for editing a payment for the subscription.
+     */
+    public function editPayment(Subscription $subscription, PaymentHistory $payment): Response
+    {
+        $this->authorize('view', $subscription);
+
+        // Ensure the payment belongs to this subscription
+        if ($payment->subscription_id !== $subscription->id) {
+            abort(404);
+        }
+
+        // Load subscription relationships
+        $subscription->load(['currency', 'paymentMethod']);
+
+        // Load payment with its relationships
+        $payment->load(['currency', 'paymentMethod', 'attachments']);
+
+        // Load payment methods and currencies for the payment form
+        $paymentMethods = $subscription->user->paymentMethods()->where('is_active', true)->get();
+        $currencies = \App\Models\Currency::all();
+
+        return Inertia::render('subscriptions/payments/edit', [
+            'subscription' => $subscription,
+            'payment' => $payment,
             'paymentMethods' => $paymentMethods,
             'currencies' => $currencies,
         ]);
