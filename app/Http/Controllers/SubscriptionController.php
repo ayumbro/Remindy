@@ -206,6 +206,7 @@ class SubscriptionController extends Controller
             'notifications_enabled' => 'boolean',
             'use_default_notifications' => 'boolean',
             'email_enabled' => 'boolean',
+            'webhook_enabled' => 'boolean',
             'reminder_intervals' => 'nullable|array',
             'reminder_intervals.*' => 'integer|in:1,2,3,7,15,30',
         ], [
@@ -261,7 +262,7 @@ class SubscriptionController extends Controller
                 'use_default_notifications' => false,
                 'notifications_enabled' => true,
                 'email_enabled' => $notificationData['email_enabled'],
-                'webhook_enabled' => false, // Not implemented yet
+                'webhook_enabled' => $notificationData['webhook_enabled'] ?? false,
                 'reminder_intervals' => $notificationData['reminder_intervals'] ?? $user->default_reminder_intervals ?? [7, 3, 1],
             ]);
         } else {
@@ -433,6 +434,7 @@ class SubscriptionController extends Controller
             'notifications_enabled' => 'boolean',
             'use_default_notifications' => 'boolean',
             'email_enabled' => 'boolean',
+            'webhook_enabled' => 'boolean',
             'reminder_intervals' => 'nullable|array',
             'reminder_intervals.*' => 'integer|in:1,2,3,7,15,30',
         ], [
@@ -466,7 +468,7 @@ class SubscriptionController extends Controller
                 'use_default_notifications' => false,
                 'notifications_enabled' => true,
                 'email_enabled' => $notificationData['email_enabled'],
-                'webhook_enabled' => false, // Not implemented yet
+                'webhook_enabled' => $notificationData['webhook_enabled'] ?? false,
                 'reminder_intervals' => $notificationData['reminder_intervals'],
             ]);
         } else {

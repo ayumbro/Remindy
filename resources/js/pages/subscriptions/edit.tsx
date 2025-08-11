@@ -1,26 +1,28 @@
-import { type BreadcrumbItem } from '@/types';
 import { Head, useForm } from '@inertiajs/react';
-import { LoaderCircle } from 'lucide-react';
+import { Bell, Calendar, DollarSign, FileText, LoaderCircle, Settings, Tag } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
-import { validateEndDateAfterStartDate } from '@/lib/validation';
-
-import InputError from '@/components/input-error';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import CategoryMultiSelector from '@/components/category-multi-selector';
-import PaymentMethodSelector from '@/components/payment-method-selector';
-
 import { DatePickerInput } from '@/components/ui/date-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import CategoryMultiSelector from '@/components/category-multi-selector';
+import PaymentMethodSelector from '@/components/payment-method-selector';
 import AppLayout from '@/layouts/app-layout';
+import { validateEndDateAfterStartDate } from '@/lib/validation';
+import { type BreadcrumbItem } from '@/types';
+import { BILLING_CYCLES } from '@/constants/subscription';
+
+// Custom InputError component for better styling
+const InputError = ({ message, className = '' }: { message?: string; className?: string }) => {
+    return message ? <p className={`text-destructive text-sm ${className}`}>{message}</p> : null;
+};
 
 interface Currency {
     id: number;
@@ -102,6 +104,7 @@ interface SubscriptionForm {
     notifications_enabled: boolean;
     use_default_notifications: boolean;
     email_enabled: boolean;
+    webhook_enabled: boolean;
     reminder_intervals: number[];
 }
 
@@ -164,6 +167,7 @@ export default function EditSubscription({
         notifications_enabled: subscription?.notification_settings ? true : false,
         use_default_notifications: !subscription?.notification_settings,
         email_enabled: subscription?.notification_settings?.email_enabled ?? defaultNotificationSettings?.email_enabled ?? true,
+        webhook_enabled: subscription?.notification_settings?.webhook_enabled ?? defaultNotificationSettings?.webhook_enabled ?? false,
         reminder_intervals: subscription?.notification_settings?.reminder_intervals ??
             defaultNotificationSettings?.reminder_intervals ?? [7, 3, 1],
     });
@@ -192,6 +196,7 @@ export default function EditSubscription({
             ...data,
             use_default_notifications: true,
             email_enabled: defaultNotificationSettings?.email_enabled ?? true,
+            webhook_enabled: defaultNotificationSettings?.webhook_enabled ?? false,
             reminder_intervals: defaultNotificationSettings?.reminder_intervals ?? [7, 3, 1],
         });
     };
@@ -210,12 +215,9 @@ export default function EditSubscription({
             return;
         }
 
-        // Validate end_date against start_date using utility function
         if (data.end_date && !validateEndDateAfterStartDate(subscription.start_date, data.end_date, true)) {
             return;
         }
-
-        // Remove immutable fields from the data being sent to the backend
         const { billing_cycle, billing_interval, ...updateData } = data;
 
         put(route('subscriptions.update', subscription?.id), {
@@ -230,14 +232,7 @@ export default function EditSubscription({
         setData('category_ids', categoryIds);
     };
 
-    const billingCycles = [
-        { value: 'daily', label: 'Daily' },
-        { value: 'weekly', label: 'Weekly' },
-        { value: 'monthly', label: 'Monthly' },
-        { value: 'quarterly', label: 'Quarterly' },
-        { value: 'yearly', label: 'Yearly' },
-        { value: 'one-time', label: 'One-time' },
-    ];
+
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -249,347 +244,421 @@ export default function EditSubscription({
                     <p className="text-muted-foreground">Update the details of your subscription</p>
                 </div>
 
-                <Card className="max-w-2xl">
+                <Card className="max-w-4xl">
                     <CardHeader>
-                        <CardTitle>Subscription Details</CardTitle>
+                        <CardTitle>Edit Subscription</CardTitle>
                         <CardDescription>Update the details of your subscription</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <form onSubmit={submit} className="space-y-6">
-                            {/* Basic Information */}
-                            <div className="grid gap-4 md:grid-cols-2">
-                                <div className="space-y-2">
-                                    <Label htmlFor="edit-subscription-name">Subscription Name *</Label>
-                                    <Input
-                                        id="edit-subscription-name"
-                                        name="name"
-                                        type="text"
-                                        required
-                                        value={data.name}
-                                        onChange={(e) => setData('name', e.target.value)}
-                                        disabled={processing}
-                                        placeholder="e.g., Netflix Premium"
-                                        autoComplete="off"
-                                    />
-                                    <InputError message={errors.name} />
+                        <form onSubmit={submit} className="space-y-8">
+                            {/* Basic Information Section */}
+                            <div className="space-y-6">
+                                <div className="flex items-center gap-2 border-b pb-2">
+                                    <Settings className="h-5 w-5 text-primary" />
+                                    <h3 className="text-lg font-semibold">Basic Information</h3>
                                 </div>
 
+                                <div className="grid gap-4 md:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="edit-subscription-name">Subscription Name *</Label>
+                                        <Input
+                                            id="edit-subscription-name"
+                                            name="name"
+                                            type="text"
+                                            required
+                                            value={data.name}
+                                            onChange={(e) => setData('name', e.target.value)}
+                                            disabled={processing}
+                                            placeholder="e.g., Netflix Premium"
+                                            autoComplete="off"
+                                        />
+                                        <InputError message={errors.name} />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="edit-subscription-price">Price *</Label>
+                                        <Input
+                                            id="edit-subscription-price"
+                                            name="price"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            max="999999.99"
+                                            required
+                                            value={data.price}
+                                            onChange={(e) => setData('price', e.target.value)}
+                                            disabled={processing}
+                                            placeholder="0.00"
+                                            autoComplete="off"
+                                        />
+                                        <InputError message={errors.price} />
+                                    </div>
+                                </div>
+
+                                {/* Description */}
                                 <div className="space-y-2">
-                                    <Label htmlFor="edit-subscription-price">Price *</Label>
-                                    <Input
-                                        id="edit-subscription-price"
-                                        name="price"
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        max="999999.99"
-                                        required
-                                        value={data.price}
-                                        onChange={(e) => setData('price', e.target.value)}
+                                    <Label htmlFor="edit-subscription-description">Description</Label>
+                                    <Textarea
+                                        id="edit-subscription-description"
+                                        name="description"
+                                        value={data.description}
+                                        onChange={(e) => setData('description', e.target.value)}
                                         disabled={processing}
-                                        placeholder="0.00"
+                                        placeholder="Brief description of the subscription"
+                                        rows={3}
                                         autoComplete="off"
                                     />
-                                    <InputError message={errors.price} />
+                                    <InputError message={errors.description} />
+                                </div>
+
+                                {/* Website URL */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="edit-subscription-website-url">Website URL</Label>
+                                    <Input
+                                        id="edit-subscription-website-url"
+                                        name="website_url"
+                                        type="url"
+                                        value={data.website_url}
+                                        onChange={(e) => setData('website_url', e.target.value)}
+                                        disabled={processing}
+                                        placeholder="https://example.com"
+                                        autoComplete="url"
+                                    />
+                                    <InputError message={errors.website_url} />
                                 </div>
                             </div>
 
-                            {/* Description */}
-                            <div className="space-y-2">
-                                <Label htmlFor="edit-subscription-description">Description</Label>
-                                <Textarea
-                                    id="edit-subscription-description"
-                                    name="description"
-                                    value={data.description}
-                                    onChange={(e) => setData('description', e.target.value)}
-                                    disabled={processing}
-                                    placeholder="Brief description of the subscription"
-                                    rows={3}
-                                    autoComplete="off"
-                                />
-                                <InputError message={errors.description} />
-                            </div>
-
-                            {/* Currency and Payment Method */}
-                            <div className="grid gap-4 md:grid-cols-2">
-                                <div className="space-y-2">
-                                    <Label htmlFor="edit-subscription-currency">Currency *</Label>
-                                    <Select value={data.currency_id} onValueChange={(value) => setData('currency_id', value)} name="currency_id">
-                                        <SelectTrigger id="edit-subscription-currency">
-                                            <SelectValue placeholder="Select currency" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {currencies.map((currency) => (
-                                                <SelectItem key={currency.id} value={currency.id.toString()}>
-                                                    {currency.symbol} {currency.code} - {currency.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <InputError message={errors.currency_id} />
+                            {/* Billing Information Section */}
+                            <div className="space-y-6">
+                                <div className="flex items-center gap-2 border-b pb-2">
+                                    <DollarSign className="h-5 w-5 text-primary" />
+                                    <h3 className="text-lg font-semibold">Billing Information</h3>
                                 </div>
 
+                                {/* Currency and Payment Method */}
+                                <div className="grid gap-4 md:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="edit-subscription-currency">Currency *</Label>
+                                        <Select value={data.currency_id} onValueChange={(value) => setData('currency_id', value)} name="currency_id">
+                                            <SelectTrigger id="edit-subscription-currency">
+                                                <SelectValue placeholder="Select currency" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {currencies.map((currency) => (
+                                                    <SelectItem key={currency.id} value={currency.id.toString()}>
+                                                        {currency.symbol} {currency.code} - {currency.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <InputError message={errors.currency_id} />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="edit-subscription-payment-method">Payment Method</Label>
+                                        <PaymentMethodSelector
+                                            paymentMethods={paymentMethods}
+                                            selectedPaymentMethodId={data.payment_method_id}
+                                            onPaymentMethodChange={(paymentMethodId) => setData('payment_method_id', paymentMethodId)}
+                                            onPaymentMethodCreated={() => {}}
+                                            placeholder="Select payment method..."
+                                            disabled={processing}
+                                            error={errors.payment_method_id}
+                                            allowCreate={true}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Billing Cycle Information */}
+                                <div className="grid gap-4 md:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="edit-subscription-billing-cycle">Billing Cycle</Label>
+                                        <Select value={data.billing_cycle} disabled name="billing_cycle">
+                                            <SelectTrigger id="edit-subscription-billing-cycle" className="bg-muted">
+                                                <SelectValue placeholder="Select billing cycle" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {BILLING_CYCLES.map((cycle) => (
+                                                    <SelectItem key={cycle.value} value={cycle.value}>
+                                                        {cycle.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <p className="text-muted-foreground text-xs">Billing cycle cannot be changed after subscription creation</p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="edit-subscription-billing-interval">Billing Interval</Label>
+                                        <Input
+                                            id="edit-subscription-billing-interval"
+                                            name="billing_interval"
+                                            type="number"
+                                            min="1"
+                                            max="12"
+                                            value={data.billing_interval}
+                                            disabled={true}
+                                            placeholder="1"
+                                            autoComplete="off"
+                                            className="bg-muted"
+                                        />
+                                        <p className="text-muted-foreground text-xs">Billing interval cannot be changed after subscription creation</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Dates Section */}
+                            <div className="space-y-6">
+                                <div className="flex items-center gap-2 border-b pb-2">
+                                    <Calendar className="h-5 w-5 text-primary" />
+                                    <h3 className="text-lg font-semibold">Dates</h3>
+                                </div>
+
+                                <div className="grid gap-4 md:grid-cols-3">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="edit-subscription-start-date">Start Date</Label>
+                                        <DatePickerInput
+                                            id="edit-subscription-start-date"
+                                            name="start_date"
+                                            value={subscription?.start_date || ''}
+                                            onChange={() => {}}
+                                            disabled={true}
+                                            placeholder="Start date"
+                                            className="bg-muted"
+                                        />
+                                        <p className="text-muted-foreground text-xs">Start date cannot be changed after creation</p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="edit-subscription-first-billing-date">First Billing Date</Label>
+                                        <DatePickerInput
+                                            id="edit-subscription-first-billing-date"
+                                            name="first_billing_date"
+                                            value={subscription?.first_billing_date || ''}
+                                            onChange={() => {}}
+                                            disabled={true}
+                                            placeholder="First billing date"
+                                            className="bg-muted"
+                                        />
+                                        <p className="text-muted-foreground text-xs">First billing date cannot be changed after creation</p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="edit-subscription-end-date">End Date</Label>
+                                        <DatePickerInput
+                                            id="edit-subscription-end-date"
+                                            name="end_date"
+                                            value={data.end_date}
+                                            onChange={(value) => setData('end_date', value)}
+                                            disabled={processing}
+                                            error={!!errors.end_date}
+                                            placeholder="Select end date (optional)"
+                                            min={subscription.start_date}
+                                        />
+                                        <InputError message={errors.end_date} />
+                                        <p className="text-muted-foreground text-xs">
+                                            Leave empty for ongoing subscriptions. End date must be on or after the start date ({subscription.start_date}
+                                            ).
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Categories Section */}
+                            <div className="space-y-6">
+                                <div className="flex items-center gap-2 border-b pb-2">
+                                    <Tag className="h-5 w-5 text-primary" />
+                                    <h3 className="text-lg font-semibold">Categories</h3>
+                                </div>
+
+                                {/* Categories */}
                                 <div className="space-y-2">
-                                    <Label htmlFor="edit-subscription-payment-method">Payment Method</Label>
-                                    <PaymentMethodSelector
-                                        paymentMethods={paymentMethods}
-                                        selectedPaymentMethodId={data.payment_method_id}
-                                        onPaymentMethodChange={(paymentMethodId) => setData('payment_method_id', paymentMethodId)}
-                                        onPaymentMethodCreated={(newPaymentMethod) => {
-                                            // Payment method created successfully
-                                        }}
-                                        placeholder="Select payment method..."
+                                    <Label>Categories</Label>
+                                    <CategoryMultiSelector
+                                        categories={categories}
+                                        selectedCategoryIds={data.category_ids}
+                                        onCategoryChange={handleCategoryChange}
+                                        onCategoryCreated={() => {}}
+                                        placeholder="Select categories for this subscription..."
                                         disabled={processing}
-                                        error={errors.payment_method_id}
+                                        error={errors.category_ids}
                                         allowCreate={true}
                                     />
                                 </div>
                             </div>
 
-                            {/* Billing Information */}
-                            <div className="grid gap-4 md:grid-cols-2">
-                                <div className="space-y-2">
-                                    <Label htmlFor="edit-subscription-billing-cycle">Billing Cycle</Label>
-                                    <Select value={data.billing_cycle} disabled name="billing_cycle">
-                                        <SelectTrigger id="edit-subscription-billing-cycle" className="bg-muted">
-                                            <SelectValue placeholder="Select billing cycle" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {billingCycles.map((cycle) => (
-                                                <SelectItem key={cycle.value} value={cycle.value}>
-                                                    {cycle.label}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <p className="text-muted-foreground text-xs">Billing cycle cannot be changed after subscription creation</p>
+                            {/* Notifications Section */}
+                            <div className="space-y-6">
+                                <div className="flex items-center gap-2 border-b pb-2">
+                                    <Bell className="h-5 w-5 text-primary" />
+                                    <h3 className="text-lg font-semibold">Notifications</h3>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <Label htmlFor="edit-subscription-billing-interval">Billing Interval</Label>
-                                    <Input
-                                        id="edit-subscription-billing-interval"
-                                        name="billing_interval"
-                                        type="number"
-                                        min="1"
-                                        max="12"
-                                        value={data.billing_interval}
-                                        disabled={true}
-                                        placeholder="1"
-                                        autoComplete="off"
-                                        className="bg-muted"
-                                    />
-                                    <p className="text-muted-foreground text-xs">Billing interval cannot be changed after subscription creation</p>
-                                </div>
-                            </div>
-
-                            {/* Dates */}
-                            <div className="grid gap-4 md:grid-cols-3">
-                                <div className="space-y-2">
-                                    <Label htmlFor="edit-subscription-start-date">Start Date</Label>
-                                    <DatePickerInput
-                                        id="edit-subscription-start-date"
-                                        name="start_date"
-                                        value={subscription?.start_date || ''}
-                                        onChange={() => {}} // No-op since it's disabled
-                                        disabled={true}
-                                        placeholder="Start date"
-                                        className="bg-muted"
-                                    />
-                                    <p className="text-muted-foreground text-xs">Start date cannot be changed after creation</p>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="edit-subscription-first-billing-date">First Billing Date</Label>
-                                    <DatePickerInput
-                                        id="edit-subscription-first-billing-date"
-                                        name="first_billing_date"
-                                        value={subscription?.first_billing_date || ''}
-                                        onChange={() => {}} // No-op since it's disabled
-                                        disabled={true}
-                                        placeholder="First billing date"
-                                        className="bg-muted"
-                                    />
-                                    <p className="text-muted-foreground text-xs">First billing date cannot be changed after creation</p>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="edit-subscription-end-date">End Date</Label>
-                                    <DatePickerInput
-                                        id="edit-subscription-end-date"
-                                        name="end_date"
-                                        value={data.end_date}
-                                        onChange={(value) => setData('end_date', value)}
-                                        disabled={processing}
-                                        error={!!errors.end_date}
-                                        placeholder="Select end date (optional)"
-                                        min={subscription.start_date}
-                                    />
-                                    <InputError message={errors.end_date} />
-                                    <p className="text-muted-foreground text-xs">
-                                        Leave empty for ongoing subscriptions. End date must be on or after the start date ({subscription.start_date}
-                                        ).
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* Website URL */}
-                            <div className="space-y-2">
-                                <Label htmlFor="edit-subscription-website-url">Website URL</Label>
-                                <Input
-                                    id="edit-subscription-website-url"
-                                    name="website_url"
-                                    type="url"
-                                    value={data.website_url}
-                                    onChange={(e) => setData('website_url', e.target.value)}
-                                    disabled={processing}
-                                    placeholder="https://example.com"
-                                    autoComplete="url"
-                                />
-                                <InputError message={errors.website_url} />
-                            </div>
-
-                            {/* Categories */}
-                            <div className="space-y-2">
-                                <Label>Categories</Label>
-                                <CategoryMultiSelector
-                                    categories={categories}
-                                    selectedCategoryIds={data.category_ids}
-                                    onCategoryChange={handleCategoryChange}
-                                    onCategoryCreated={(newCategory) => {
-                                        // Category created successfully
-                                    }}
-                                    placeholder="Select categories for this subscription..."
-                                    disabled={processing}
-                                    error={errors.category_ids}
-                                    allowCreate={true}
-                                />
-                            </div>
-
-                            {/* Notification Settings */}
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <div className="space-y-0.5">
-                                        <Label htmlFor="edit-notifications-enabled" className="text-base">Notifications</Label>
-                                        <p className="text-muted-foreground text-sm">Configure notification settings for this subscription</p>
+                                {/* Master Notifications Toggle */}
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-0.5">
+                                            <Label htmlFor="edit-notifications-enabled" className="text-base">Enable notifications</Label>
+                                            <p className="text-muted-foreground text-sm">Turn on to receive reminders about upcoming billing dates</p>
+                                        </div>
+                                        <Switch
+                                            id="edit-notifications-enabled"
+                                            name="notifications_enabled"
+                                            checked={data.notifications_enabled}
+                                            onCheckedChange={(checked) => setData({
+                                                ...data,
+                                                notifications_enabled: checked,
+                                                email_enabled: checked,
+                                                webhook_enabled: checked ? data.webhook_enabled : false
+                                            })}
+                                        />
                                     </div>
-                                    <Switch
-                                        id="edit-notifications-enabled"
-                                        name="notifications_enabled"
-                                        checked={data.notifications_enabled}
-                                        onCheckedChange={(checked) => setData('notifications_enabled', checked)}
-                                    />
                                 </div>
 
                                 {data.notifications_enabled && (
-                                    <div className="border-muted space-y-4 border-l-2 pl-4">
-                                        {/* Use Default Settings Toggle */}
-                                        <div className="flex items-center justify-between">
-                                            <div className="space-y-0.5">
-                                                <Label htmlFor="edit-use-default-notifications" className="text-sm font-medium">Use Default Settings</Label>
-                                                <p className="text-muted-foreground text-xs">Use your global notification preferences</p>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <Switch
-                                                    id="edit-use-default-notifications"
-                                                    name="use_default_notifications"
-                                                    checked={data.use_default_notifications}
-                                                    onCheckedChange={(checked) => {
-                                                        setData('use_default_notifications', checked);
-                                                        if (checked) {
-                                                            resetToDefaults();
-                                                        }
-                                                    }}
-                                                />
-                                                {data.use_default_notifications && (
-                                                    <Badge variant="secondary" className="text-xs">
-                                                        Using defaults
-                                                    </Badge>
-                                                )}
+                                    <>
+                                        {/* Use Default Settings */}
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <div className="space-y-0.5">
+                                                    <Label htmlFor="edit-use-default-notifications" className="text-base">Use Default Settings</Label>
+                                                    <p className="text-muted-foreground text-sm">Use your default notification preferences for this subscription</p>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <Switch
+                                                        id="edit-use-default-notifications"
+                                                        name="use_default_notifications"
+                                                        checked={data.use_default_notifications}
+                                                        onCheckedChange={(checked) => {
+                                                            setData('use_default_notifications', checked);
+                                                            if (checked) {
+                                                                resetToDefaults();
+                                                            }
+                                                        }}
+                                                    />
+                                                    {data.use_default_notifications && (
+                                                        <Badge variant="secondary" className="text-xs">
+                                                            Using defaults
+                                                        </Badge>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
 
-                                        {/* Custom Settings */}
+                                        {/* Notification Channel Options - Only show when not using defaults */}
                                         {!data.use_default_notifications && (
                                             <div className="space-y-4">
-                                                {/* Email Settings */}
-                                                <div className="space-y-3">
-                                                    <div className="flex items-center justify-between">
-                                                        <Label htmlFor="edit-email-enabled" className="text-sm font-medium">Email Notifications</Label>
-                                                        <Switch
-                                                            id="edit-email-enabled"
-                                                            name="email_enabled"
-                                                            checked={data.email_enabled}
-                                                            onCheckedChange={(checked) => setData('email_enabled', checked)}
-                                                        />
-                                                    </div>
-
+                                                <div className="space-y-0.5">
+                                                    <Label className="text-base">Notification Channels</Label>
+                                                    <p className="text-muted-foreground text-sm">Choose how you want to receive notifications for this subscription</p>
                                                 </div>
 
-                                                {/* Reminder Intervals */}
-                                                <div className="space-y-3">
-                                                    <Label className="text-sm font-medium">Reminder Schedule</Label>
-                                                    <p className="text-muted-foreground text-xs">
-                                                        Choose when to receive reminders before billing dates
-                                                    </p>
-                                                    <div className="grid grid-cols-3 gap-3">
-                                                        {availableIntervals.map((interval) => (
-                                                            <div key={interval.value} className="flex items-center space-x-2">
-                                                                <Checkbox
-                                                                    id={`interval-${interval.value}`}
-                                                                    name="reminder_intervals"
-                                                                    checked={data.reminder_intervals.includes(interval.value)}
-                                                                    onCheckedChange={(checked) =>
-                                                                        handleIntervalChange(interval.value, checked as boolean)
-                                                                    }
-                                                                />
-                                                                <Label htmlFor={`interval-${interval.value}`} className="text-sm">
-                                                                    {interval.label}
-                                                                </Label>
-                                                            </div>
-                                                        ))}
+                                                {/* Email Notifications Toggle */}
+                                                <div className="flex items-center justify-between">
+                                                    <div className="space-y-0.5">
+                                                        <Label htmlFor="edit-email-enabled" className="text-sm font-medium">Email notifications</Label>
+                                                        <p className="text-muted-foreground text-xs">Receive reminders via email</p>
                                                     </div>
+                                                    <Switch
+                                                        id="edit-email-enabled"
+                                                        name="email_enabled"
+                                                        checked={data.email_enabled}
+                                                        onCheckedChange={(checked) => setData('email_enabled', checked)}
+                                                    />
+                                                </div>
+
+                                                {/* Webhook Notifications Toggle */}
+                                                <div className="flex items-center justify-between">
+                                                    <div className="space-y-0.5">
+                                                        <Label htmlFor="edit-webhook-enabled" className="text-sm font-medium text-muted-foreground">Webhook notifications</Label>
+                                                        <p className="text-muted-foreground text-xs">Send notifications to external services (coming soon)</p>
+                                                    </div>
+                                                    <Switch
+                                                        id="edit-webhook-enabled"
+                                                        name="webhook_enabled"
+                                                        checked={data.webhook_enabled}
+                                                        onCheckedChange={(checked) => setData('webhook_enabled', checked)}
+                                                        disabled={true}
+                                                    />
                                                 </div>
                                             </div>
                                         )}
 
-                                        {/* Default Settings Preview */}
-                                        {data.use_default_notifications && (
-                                            <div className="bg-muted/50 rounded-lg p-3">
-                                                <p className="mb-2 text-sm font-medium">Current Default Settings:</p>
-                                                <div className="text-muted-foreground space-y-1 text-xs">
-                                                    <p>• Email: {defaultNotificationSettings?.email_enabled ? 'Enabled' : 'Disabled'}</p>
-                                                    <p>
-                                                        • Reminders:{' '}
-                                                        {defaultNotificationSettings?.reminder_intervals
-                                                            ?.map((i) => availableIntervals.find((ai) => ai.value === i)?.label)
-                                                            .join(', ') || 'None'}
-                                                    </p>
-                                                </div>
+                                        {/* Reminder Schedule - Always show when notifications enabled */}
+                                        <div className="space-y-4">
+                                            <div className="space-y-0.5">
+                                                <Label className="text-base">Reminder Schedule</Label>
+                                                <p className="text-muted-foreground text-sm">
+                                                    {data.use_default_notifications
+                                                        ? "Using your default reminder schedule"
+                                                        : "Choose when to receive reminders before billing dates"
+                                                    }
+                                                </p>
                                             </div>
-                                        )}
-                                    </div>
+
+                                            {!data.use_default_notifications ? (
+                                                <div className="grid grid-cols-3 gap-3">
+                                                    {availableIntervals.map((interval) => (
+                                                        <div key={interval.value} className="flex items-center space-x-2">
+                                                            <Checkbox
+                                                                id={`interval-${interval.value}`}
+                                                                name="reminder_intervals"
+                                                                checked={data.reminder_intervals.includes(interval.value)}
+                                                                onCheckedChange={(checked) =>
+                                                                    handleIntervalChange(interval.value, checked as boolean)
+                                                                }
+                                                            />
+                                                            <Label htmlFor={`interval-${interval.value}`} className="text-sm">
+                                                                {interval.label}
+                                                            </Label>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div className="bg-muted/50 rounded-lg p-3">
+                                                    <p className="mb-2 text-sm font-medium">Current Default Schedule:</p>
+                                                    <div className="text-muted-foreground space-y-1 text-xs">
+                                                        <p>
+                                                            • Reminders: {' '}
+                                                            {defaultNotificationSettings?.reminder_intervals
+                                                                ?.map((i) => availableIntervals.find((ai) => ai.value === i)?.label)
+                                                                .join(', ') || 'None'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            <InputError message={errors.reminder_intervals} />
+                                        </div>
+                                    </>
                                 )}
                             </div>
 
-                            {/* Notes */}
-                            <div className="space-y-2">
-                                <Label htmlFor="edit-subscription-notes">Notes</Label>
-                                <Textarea
-                                    id="edit-subscription-notes"
-                                    name="notes"
-                                    value={data.notes}
-                                    onChange={(e) => setData('notes', e.target.value)}
-                                    disabled={processing}
-                                    placeholder="Additional notes about this subscription"
-                                    rows={3}
-                                    autoComplete="off"
-                                />
-                                <InputError message={errors.notes} />
+                            {/* Additional Information Section */}
+                            <div className="space-y-6">
+                                <div className="flex items-center gap-2 border-b pb-2">
+                                    <FileText className="h-5 w-5 text-primary" />
+                                    <h3 className="text-lg font-semibold">Additional Information</h3>
+                                </div>
+
+                                {/* Notes */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="edit-subscription-notes">Notes</Label>
+                                    <Textarea
+                                        id="edit-subscription-notes"
+                                        name="notes"
+                                        value={data.notes}
+                                        onChange={(e) => setData('notes', e.target.value)}
+                                        disabled={processing}
+                                        placeholder="Additional notes about this subscription"
+                                        rows={3}
+                                        autoComplete="off"
+                                    />
+                                    <InputError message={errors.notes} />
+                                </div>
                             </div>
 
                             {/* Submit Buttons */}
-                            <div className="flex gap-4 pt-4">
+                            <div className="flex gap-4 pt-6">
                                 <Button type="submit" disabled={processing}>
                                     {processing && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
                                     Update Subscription
