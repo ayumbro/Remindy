@@ -412,8 +412,7 @@ export default function CreateSubscription({
                                                 selectedPaymentMethodId={data.payment_method_id}
                                                 onPaymentMethodChange={(paymentMethodId) => setData('payment_method_id', paymentMethodId)}
                                                 onPaymentMethodCreated={(newPaymentMethod) => {
-                                                    // Optionally handle the new payment method creation
-                                                    console.log('New payment method created:', newPaymentMethod);
+                                                    // Payment method created successfully
                                                 }}
                                                 placeholder="Select payment method..."
                                                 disabled={processing}
@@ -531,8 +530,7 @@ export default function CreateSubscription({
                                                 selectedCategoryIds={data.category_ids}
                                                 onCategoryChange={handleCategoryChange}
                                                 onCategoryCreated={(newCategory) => {
-                                                    // Optionally handle the new category creation
-                                                    console.log('New category created:', newCategory);
+                                                    // Category created successfully
                                                 }}
                                                 placeholder="Select categories for this subscription..."
                                                 disabled={processing}

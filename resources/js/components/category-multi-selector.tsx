@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
 import MultipleSelector, { Option } from '@/components/ui/multiple-selector';
-import { Badge } from '@/components/ui/badge';
-import { Command, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
-import { X } from 'lucide-react';
 import axios from '@/lib/axios';
 
 interface Category {
@@ -38,9 +35,19 @@ export default function CategoryMultiSelector({
 }: CategoryMultiSelectorProps) {
     const [isCreating, setIsCreating] = useState(false);
     const [availableCategories, setAvailableCategories] = useState(categories);
-    // Update available categories when categories prop changes
+
+    // Update available categories when categories prop changes, but preserve locally created categories
     React.useEffect(() => {
-        setAvailableCategories(categories);
+        setAvailableCategories(prev => {
+            // Get IDs of categories from props
+            const propCategoryIds = categories.map(cat => cat.id);
+
+            // Keep locally created categories that aren't in the props yet
+            const locallyCreatedCategories = prev.filter(cat => !propCategoryIds.includes(cat.id));
+
+            // Merge prop categories with locally created ones
+            return [...categories, ...locallyCreatedCategories];
+        });
     }, [categories]);
 
     // Convert categories to options format
@@ -58,25 +65,49 @@ export default function CategoryMultiSelector({
 
     const handleChange = async (options: Option[]) => {
         const processedOptions: Option[] = [];
+        let hasFailedCreation = false;
 
         for (const option of options) {
             // Check if this is a newly created option (value equals label and it's not in existing categories)
             const isNewCategory = option.value === option.label &&
-                !availableCategories.some(cat => cat.id.toString() === option.value);
+                !availableCategories.some(cat => cat.name.toLowerCase() === option.label.toLowerCase());
 
             if (isNewCategory) {
                 // Create the category
                 const newOption = await createCategory(option.label);
                 if (newOption) {
                     processedOptions.push(newOption);
+                } else {
+                    // Category creation failed - don't update selection to avoid losing existing selections
+                    hasFailedCreation = true;
                 }
             } else {
-                processedOptions.push(option);
+                // Check if this is an existing category selected by name (value equals label)
+                if (option.value === option.label) {
+                    // Find the existing category by name and use its proper ID
+                    const existingCategory = availableCategories.find(cat =>
+                        cat.name.toLowerCase() === option.label.toLowerCase()
+                    );
+                    if (existingCategory) {
+                        processedOptions.push({
+                            value: existingCategory.id.toString(),
+                            label: existingCategory.name,
+                            color: existingCategory.display_color,
+                        });
+                    }
+                } else {
+                    // This is already a properly formatted option with ID
+                    processedOptions.push(option);
+                }
             }
         }
 
-        const categoryIds = processedOptions.map((option) => parseInt(option.value));
-        onCategoryChange(categoryIds);
+        // Only update the selection if no category creation failed
+        // This prevents losing existing selections when creation fails
+        if (!hasFailedCreation) {
+            const categoryIds = processedOptions.map((option) => parseInt(option.value));
+            onCategoryChange(categoryIds);
+        }
     };
 
     // Function to create a new category
@@ -125,15 +156,14 @@ export default function CategoryMultiSelector({
         }
     };
 
-    // Find category by ID for color lookup
-    const getCategoryById = (id: number) => availableCategories.find(cat => cat.id === id);
+
 
     return (
         <div className="space-y-2">
             <MultipleSelector
                 value={selectedOptions}
                 onChange={handleChange}
-                defaultOptions={categoryOptions}
+                options={categoryOptions}
                 placeholder={placeholder}
                 disabled={disabled || isCreating}
                 className={cn(
@@ -152,88 +182,6 @@ export default function CategoryMultiSelector({
                             Creating category...
                         </p>
                     ) : undefined
-                }
-                commandProps={{
-                    className: "h-auto"
-                }}
-            />
-            {error && (
-                <p className="text-sm text-destructive">{error}</p>
-            )}
-        </div>
-    );
-}
-
-// Custom component that renders category options with color indicators
-interface CategoryOptionProps {
-    category: Category;
-    isSelected: boolean;
-    onSelect: () => void;
-}
-
-function CategoryOption({ category, isSelected, onSelect }: CategoryOptionProps) {
-    return (
-        <div
-            className={cn(
-                "flex items-center gap-2 px-2 py-1.5 text-sm cursor-pointer rounded-sm hover:bg-accent hover:text-accent-foreground",
-                isSelected && "bg-accent text-accent-foreground"
-            )}
-            onClick={onSelect}
-        >
-            <div
-                className="h-3 w-3 rounded-full flex-shrink-0"
-                style={{ backgroundColor: category.display_color }}
-            />
-            <span className="flex-1">{category.name}</span>
-        </div>
-    );
-}
-
-// Enhanced version with better visual representation
-export function CategoryMultiSelectorWithColors({
-    categories,
-    selectedCategoryIds,
-    onCategoryChange,
-    placeholder = "Select categories...",
-    disabled = false,
-    className,
-    error,
-}: CategoryMultiSelectorProps) {
-    // Convert categories to options format
-    const categoryOptions: Option[] = categories.map((category) => ({
-        value: category.id.toString(),
-        label: category.name,
-    }));
-
-    // Convert selected category IDs to selected options
-    const selectedOptions: Option[] = categoryOptions.filter((option) =>
-        selectedCategoryIds.includes(parseInt(option.value))
-    );
-
-    const handleChange = (options: Option[]) => {
-        const categoryIds = options.map((option) => parseInt(option.value));
-        onCategoryChange(categoryIds);
-    };
-
-    // Find category by ID for color lookup
-    const getCategoryById = (id: number) => categories.find(cat => cat.id === id);
-
-    return (
-        <div className="space-y-2">
-            <MultipleSelector
-                value={selectedOptions}
-                onChange={handleChange}
-                defaultOptions={categoryOptions}
-                placeholder={placeholder}
-                disabled={disabled}
-                className={cn(
-                    error && 'border-destructive focus-within:ring-destructive',
-                    className
-                )}
-                emptyIndicator={
-                    <p className="text-center text-sm text-muted-foreground py-6">
-                        No categories found.
-                    </p>
                 }
                 commandProps={{
                     className: "h-auto"

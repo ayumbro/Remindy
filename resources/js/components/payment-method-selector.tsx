@@ -41,9 +41,18 @@ export default function PaymentMethodSelector({
     const [isCreating, setIsCreating] = useState(false);
     const [availablePaymentMethods, setAvailablePaymentMethods] = useState(paymentMethods);
 
-    // Update available payment methods when prop changes
+    // Update available payment methods when prop changes, but preserve locally created payment methods
     useEffect(() => {
-        setAvailablePaymentMethods(paymentMethods);
+        setAvailablePaymentMethods(prev => {
+            // Get IDs of payment methods from props
+            const propPaymentMethodIds = paymentMethods.map(method => method.id);
+
+            // Keep locally created payment methods that aren't in the props yet
+            const locallyCreatedPaymentMethods = prev.filter(method => !propPaymentMethodIds.includes(method.id));
+
+            // Merge prop payment methods with locally created ones
+            return [...paymentMethods, ...locallyCreatedPaymentMethods];
+        });
     }, [paymentMethods]);
 
     // Find the selected payment method
