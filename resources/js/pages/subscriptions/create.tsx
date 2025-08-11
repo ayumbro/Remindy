@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import CategoryMultiSelector from '@/components/category-multi-selector';
 import AppLayout from '@/layouts/app-layout';
 import { validateSubscriptionDates } from '@/lib/validation';
 import { type BreadcrumbItem } from '@/types';
@@ -201,15 +202,8 @@ export default function CreateSubscription({
         });
     };
 
-    const handleCategoryChange = (categoryId: number, checked: boolean) => {
-        if (checked) {
-            setData('category_ids', [...data.category_ids, categoryId]);
-        } else {
-            setData(
-                'category_ids',
-                data.category_ids.filter((id) => id !== categoryId),
-            );
-        }
+    const handleCategoryChange = (categoryIds: number[]) => {
+        setData('category_ids', categoryIds);
     };
 
     const handleBillingCycleChange = (newBillingCycle: string) => {
@@ -529,40 +523,25 @@ export default function CreateSubscription({
 
                                 <TabsContent value="categories" className="mt-6 space-y-6">
                                     {/* Categories */}
-                                    {categories.length > 0 ? (
-                                        <div className="space-y-2">
-                                            <Label>Categories</Label>
-                                            <div className="grid gap-3 md:grid-cols-2">
-                                                {categories.map((category) => (
-                                                    <div key={category.id} className="flex items-center space-x-2">
-                                                        <Checkbox
-                                                            id={`category-${category.id}`}
-                                                            name={`category-${category.id}`}
-                                                            checked={data.category_ids.includes(category.id)}
-                                                            onCheckedChange={(checked) => handleCategoryChange(category.id, checked as boolean)}
-                                                        />
-                                                        <Label
-                                                            htmlFor={`category-${category.id}`}
-                                                            className="flex items-center gap-2 text-sm font-normal"
-                                                        >
-                                                            <div
-                                                                className="h-3 w-3 rounded-full"
-                                                                style={{ backgroundColor: category.display_color }}
-                                                            />
-                                                            {category.name}
-                                                        </Label>
-                                                    </div>
-                                                ))}
+                                    <div className="space-y-2">
+                                        <Label>Categories</Label>
+                                        {categories.length > 0 ? (
+                                            <CategoryMultiSelector
+                                                categories={categories}
+                                                selectedCategoryIds={data.category_ids}
+                                                onCategoryChange={handleCategoryChange}
+                                                placeholder="Select categories for this subscription..."
+                                                disabled={processing}
+                                                error={errors.category_ids}
+                                            />
+                                        ) : (
+                                            <div className="text-muted-foreground py-8 text-center">
+                                                <Tag className="mx-auto mb-2 h-8 w-8 opacity-50" />
+                                                <p>No categories available</p>
+                                                <p className="mt-1 text-xs">Categories can be created in the settings</p>
                                             </div>
-                                            <InputError message={errors.category_ids} />
-                                        </div>
-                                    ) : (
-                                        <div className="text-muted-foreground py-8 text-center">
-                                            <Tag className="mx-auto mb-2 h-8 w-8 opacity-50" />
-                                            <p>No categories available</p>
-                                            <p className="mt-1 text-xs">Categories can be created in the settings</p>
-                                        </div>
-                                    )}
+                                        )}
+                                    </div>
 
                                     {/* Notes */}
                                     <div className="space-y-2">

@@ -9,6 +9,7 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import CategoryMultiSelector from '@/components/category-multi-selector';
 
 import { DatePickerInput } from '@/components/ui/date-picker';
 import { Input } from '@/components/ui/input';
@@ -224,15 +225,8 @@ export default function EditSubscription({
         });
     };
 
-    const handleCategoryChange = (categoryId: number, checked: boolean) => {
-        if (checked) {
-            setData('category_ids', [...data.category_ids, categoryId]);
-        } else {
-            setData(
-                'category_ids',
-                data.category_ids.filter((id) => id !== categoryId),
-            );
-        }
+    const handleCategoryChange = (categoryIds: number[]) => {
+        setData('category_ids', categoryIds);
     };
 
     const billingCycles = [
@@ -457,31 +451,17 @@ export default function EditSubscription({
                             </div>
 
                             {/* Categories */}
-                            {categories.length > 0 && (
-                                <div className="space-y-2">
-                                    <Label>Categories</Label>
-                                    <div className="grid gap-3 md:grid-cols-2">
-                                        {categories.map((category) => (
-                                            <div key={category.id} className="flex items-center space-x-2">
-                                                <Checkbox
-                                                    id={`edit-category-${category.id}`}
-                                                    name={`category-${category.id}`}
-                                                    checked={data.category_ids.includes(category.id)}
-                                                    onCheckedChange={(checked) => handleCategoryChange(category.id, checked as boolean)}
-                                                />
-                                                <Label
-                                                    htmlFor={`edit-category-${category.id}`}
-                                                    className="flex items-center gap-2 text-sm font-normal"
-                                                >
-                                                    <div className="h-3 w-3 rounded-full" style={{ backgroundColor: category.display_color }} />
-                                                    {category.name}
-                                                </Label>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <InputError message={errors.category_ids} />
-                                </div>
-                            )}
+                            <div className="space-y-2">
+                                <Label>Categories</Label>
+                                <CategoryMultiSelector
+                                    categories={categories}
+                                    selectedCategoryIds={data.category_ids}
+                                    onCategoryChange={handleCategoryChange}
+                                    placeholder="Select categories for this subscription..."
+                                    disabled={processing}
+                                    error={errors.category_ids}
+                                />
+                            </div>
 
                             {/* Notification Settings */}
                             <div className="space-y-4">
