@@ -181,7 +181,13 @@ class SubscriptionController extends Controller
     {
         $user = Auth::user();
 
-        $validated = $request->validate([
+        // Convert "none" to null for payment_method_id
+        $requestData = $request->all();
+        if (isset($requestData['payment_method_id']) && $requestData['payment_method_id'] === 'none') {
+            $requestData['payment_method_id'] = null;
+        }
+
+        $validated = validator($requestData, [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0|max:999999.99',
@@ -205,7 +211,7 @@ class SubscriptionController extends Controller
         ], [
             'first_billing_date.after_or_equal' => 'The first billing date must be on or after the start date.',
             'end_date.after_or_equal' => 'The end date must be on or after the start date.',
-        ]);
+        ])->validate();
 
         // Additional validation: ensure payment method belongs to user
         if (! empty($validated['payment_method_id'])) {
@@ -406,7 +412,13 @@ class SubscriptionController extends Controller
     {
         $this->authorize('update', $subscription);
 
-        $validated = $request->validate([
+        // Convert "none" to null for payment_method_id
+        $requestData = $request->all();
+        if (isset($requestData['payment_method_id']) && $requestData['payment_method_id'] === 'none') {
+            $requestData['payment_method_id'] = null;
+        }
+
+        $validated = validator($requestData, [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
@@ -425,7 +437,7 @@ class SubscriptionController extends Controller
             'reminder_intervals.*' => 'integer|in:1,2,3,7,15,30',
         ], [
             'end_date.after_or_equal' => 'The end date must be on or after the start date ('.$subscription->start_date.').',
-        ]);
+        ])->validate();
 
         // Remove any immutable fields that might have been sent (extra security)
         // These fields are immutable once set during subscription creation

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import CategoryMultiSelector from '@/components/category-multi-selector';
+import PaymentMethodSelector from '@/components/payment-method-selector';
 
 import { DatePickerInput } from '@/components/ui/date-picker';
 import { Input } from '@/components/ui/input';
@@ -330,20 +331,19 @@ export default function EditSubscription({
 
                                 <div className="space-y-2">
                                     <Label htmlFor="edit-subscription-payment-method">Payment Method</Label>
-                                    <Select value={data.payment_method_id} onValueChange={(value) => setData('payment_method_id', value)} name="payment_method_id">
-                                        <SelectTrigger id="edit-subscription-payment-method">
-                                            <SelectValue placeholder="Select payment method" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="none">No payment method</SelectItem>
-                                            {paymentMethods.map((method) => (
-                                                <SelectItem key={method.id} value={method.id.toString()}>
-                                                    {method.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <InputError message={errors.payment_method_id} />
+                                    <PaymentMethodSelector
+                                        paymentMethods={paymentMethods}
+                                        selectedPaymentMethodId={data.payment_method_id}
+                                        onPaymentMethodChange={(paymentMethodId) => setData('payment_method_id', paymentMethodId)}
+                                        onPaymentMethodCreated={(newPaymentMethod) => {
+                                            // Optionally handle the new payment method creation
+                                            console.log('New payment method created:', newPaymentMethod);
+                                        }}
+                                        placeholder="Select payment method..."
+                                        disabled={processing}
+                                        error={errors.payment_method_id}
+                                        allowCreate={true}
+                                    />
                                 </div>
                             </div>
 

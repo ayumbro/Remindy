@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PaymentMethod;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -259,5 +260,57 @@ class PaymentMethodController extends Controller
         $paymentMethod->update(['is_active' => $newStatus]);
 
         return back()->with('success', "Payment method '{$paymentMethod->name}' has been {$action}.");
+    }
+
+    /**
+     * Store a new payment method via API for inline creation.
+     */
+    public function apiStore(Request $request): JsonResponse
+    {
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                function ($_, $value, $fail) use ($user) {
+                    // Check for duplicate names for this user
+                    $exists = PaymentMethod::where('user_id', $user->id)
+                        ->where('name', trim($value))
+                        ->exists();
+
+                    if ($exists) {
+                        $fail('A payment method with this name already exists.');
+                    }
+                },
+            ],
+        ]);
+
+        try {
+            $paymentMethod = PaymentMethod::create([
+                'user_id' => $user->id,
+                'name' => trim($validated['name']),
+                'description' => null,
+                'image_path' => null,
+                'is_active' => true,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'payment_method' => [
+                    'id' => $paymentMethod->id,
+                    'name' => $paymentMethod->name,
+                    'description' => $paymentMethod->description,
+                    'is_active' => $paymentMethod->is_active,
+                ],
+                'message' => "Payment method '{$paymentMethod->name}' created successfully!",
+            ]);
+        } catch (\Exception) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create payment method. Please try again.',
+            ], 500);
+        }
     }
 }
