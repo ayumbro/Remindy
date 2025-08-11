@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -174,5 +175,47 @@ class CategoryController extends Controller
 
         return to_route('categories.index')
             ->with('success', "Category '{$categoryName}' deleted successfully!");
+    }
+
+    /**
+     * Store a newly created category via API (for inline creation).
+     */
+    public function apiStore(Request $request): JsonResponse
+    {
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                function ($attribute, $value, $fail) use ($user) {
+                    if (Category::forUser($user->id)->where('name', $value)->exists()) {
+                        $fail('A category with this name already exists.');
+                    }
+                },
+            ],
+        ]);
+
+        // Assign a random color from the default palette
+        $defaultColors = Category::getDefaultColors();
+        $randomColor = $defaultColors[array_rand($defaultColors)];
+
+        $category = $user->categories()->create([
+            'name' => $validated['name'],
+            'color' => $randomColor,
+            'description' => null,
+            'is_active' => true,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'category' => [
+                'id' => $category->id,
+                'name' => $category->name,
+                'display_color' => $category->display_color,
+            ],
+            'message' => "Category '{$category->name}' created successfully!",
+        ]);
     }
 }

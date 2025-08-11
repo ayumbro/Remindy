@@ -457,9 +457,14 @@ export default function EditSubscription({
                                     categories={categories}
                                     selectedCategoryIds={data.category_ids}
                                     onCategoryChange={handleCategoryChange}
+                                    onCategoryCreated={(newCategory) => {
+                                        // Optionally handle the new category creation
+                                        console.log('New category created:', newCategory);
+                                    }}
                                     placeholder="Select categories for this subscription..."
                                     disabled={processing}
                                     error={errors.category_ids}
+                                    allowCreate={true}
                                 />
                             </div>
 

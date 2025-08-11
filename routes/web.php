@@ -36,6 +36,7 @@ Route::middleware(['auth'])->group(function () {
         ->name('subscriptions.payments.edit');
 
     Route::resource('categories', CategoryController::class);
+    Route::post('api/categories', [CategoryController::class, 'apiStore'])->name('api.categories.store');
     Route::resource('payment-methods', PaymentMethodController::class);
 
     // Additional POST route for payment method updates with FormData (file uploads)
