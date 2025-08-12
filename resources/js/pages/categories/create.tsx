@@ -134,10 +134,10 @@ export default function CreateCategory({ defaultColors = [] }: CreateCategoryPro
                                                 <button
                                                     key={color}
                                                     type="button"
-                                                    className={`h-8 w-8 rounded-full border-2 transition-all ${
+                                                    className={`h-8 w-8 rounded-full border-2 transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                                                         selectedColor === color
-                                                            ? 'scale-110 border-gray-900'
-                                                            : 'border-gray-300 hover:border-gray-500'
+                                                            ? 'scale-110 border-foreground ring-2 ring-ring ring-offset-2 ring-offset-background'
+                                                            : 'border-border hover:border-muted-foreground'
                                                     }`}
                                                     style={{ backgroundColor: color }}
                                                     onClick={() => handleColorSelect(color)}
