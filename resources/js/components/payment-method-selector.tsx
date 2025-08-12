@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import axios from '@/lib/axios';
+import { router } from '@inertiajs/react';
 
 interface PaymentMethod {
     id: number;
@@ -73,47 +73,48 @@ export default function PaymentMethodSelector({
         );
 
     // Function to create a new payment method
-    const createPaymentMethod = async (name: string): Promise<void> => {
+    const createPaymentMethod = (name: string): void => {
         if (isCreating) return;
 
         setIsCreating(true);
 
-        try {
-            const response = await axios.post(route('api.payment-methods.store'), {
-                name: name.trim(),
-            });
+        router.post(route('api.payment-methods.store'), {
+            name: name.trim(),
+        }, {
+            onSuccess: (page) => {
+                // Extract the new payment method from the response
+                const data = page.props as any;
+                const newPaymentMethod: PaymentMethod = data.payment_method;
 
-            const data = response.data;
-            const newPaymentMethod: PaymentMethod = data.payment_method;
+                // Add the new payment method to available options
+                setAvailablePaymentMethods(prev => [...prev, newPaymentMethod]);
 
-            // Add the new payment method to available options
-            setAvailablePaymentMethods(prev => [...prev, newPaymentMethod]);
+                // Notify parent component if callback provided
+                onPaymentMethodCreated?.(newPaymentMethod);
 
-            // Notify parent component if callback provided
-            onPaymentMethodCreated?.(newPaymentMethod);
+                // Select the newly created payment method
+                onPaymentMethodChange(newPaymentMethod.id.toString());
 
-            // Select the newly created payment method
-            onPaymentMethodChange(newPaymentMethod.id.toString());
+                // Close the popover and clear search
+                setOpen(false);
+                setSearchValue('');
+                setIsCreating(false);
+            },
+            onError: (errors) => {
+                console.error('Error creating payment method:', errors);
 
-            // Close the popover and clear search
-            setOpen(false);
-            setSearchValue('');
-        } catch (error: any) {
-            console.error('Error creating payment method:', error);
-            
-            // Handle validation errors
-            if (error.response?.status === 422) {
-                const validationErrors = error.response.data.errors;
-                if (validationErrors?.name) {
-                    console.error('Payment method validation error:', validationErrors.name[0]);
+                // Handle validation errors
+                if (errors.name) {
+                    console.error('Payment method validation error:', Array.isArray(errors.name) ? errors.name[0] : errors.name);
                     // You might want to show a toast notification here
+                } else {
+                    console.error('Failed to create payment method');
                 }
-            } else {
-                console.error('Failed to create payment method:', error.response?.data?.message || error.message);
-            }
-        } finally {
-            setIsCreating(false);
-        }
+                setIsCreating(false);
+            },
+            preserveState: true,
+            preserveScroll: true,
+        });
     };
 
     const handleSelect = (paymentMethodId: string) => {

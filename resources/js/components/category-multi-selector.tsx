@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import MultipleSelector, { Option } from '@/components/ui/multiple-selector';
 import { cn } from '@/lib/utils';
-import axios from '@/lib/axios';
+import { router } from '@inertiajs/react';
 
 interface Category {
     id: number;
@@ -111,49 +111,54 @@ export default function CategoryMultiSelector({
     };
 
     // Function to create a new category
-    const createCategory = async (name: string): Promise<Option | null> => {
-        if (isCreating) return null;
+    const createCategory = (name: string): Promise<Option | null> => {
+        if (isCreating) return Promise.resolve(null);
 
         setIsCreating(true);
 
-        try {
-            const response = await axios.post(route('api.categories.store'), {
+        return new Promise((resolve) => {
+            router.post(route('api.categories.store'), {
                 name: name.trim(),
+            }, {
+                onSuccess: (page) => {
+                    // Extract the new category from the response
+                    const data = page.props as any;
+                    const newCategory: Category = data.category;
+
+                    // Add the new category to available categories
+                    setAvailableCategories(prev => [...prev, newCategory]);
+
+                    // Notify parent component if callback provided
+                    onCategoryCreated?.(newCategory);
+
+                    // Return the new option
+                    const newOption: Option = {
+                        value: newCategory.id.toString(),
+                        label: newCategory.name,
+                        color: newCategory.display_color,
+                    };
+
+                    setIsCreating(false);
+                    resolve(newOption);
+                },
+                onError: (errors) => {
+                    console.error('Error creating category:', errors);
+
+                    // Handle validation errors
+                    if (errors.name) {
+                        console.error('Category validation error:', Array.isArray(errors.name) ? errors.name[0] : errors.name);
+                        // You might want to show a toast notification here
+                    } else {
+                        console.error('Failed to create category');
+                    }
+
+                    setIsCreating(false);
+                    resolve(null);
+                },
+                preserveState: true,
+                preserveScroll: true,
             });
-
-            const data = response.data;
-            const newCategory: Category = data.category;
-
-            // Add the new category to available categories
-            setAvailableCategories(prev => [...prev, newCategory]);
-
-            // Notify parent component if callback provided
-            onCategoryCreated?.(newCategory);
-
-            // Return the new option
-            return {
-                value: newCategory.id.toString(),
-                label: newCategory.name,
-                color: newCategory.display_color,
-            };
-        } catch (error: any) {
-            console.error('Error creating category:', error);
-
-            // Handle validation errors
-            if (error.response?.status === 422) {
-                const validationErrors = error.response.data.errors;
-                if (validationErrors?.name) {
-                    console.error('Category validation error:', validationErrors.name[0]);
-                    // You might want to show a toast notification here
-                }
-            } else {
-                console.error('Failed to create category:', error.response?.data?.message || error.message);
-            }
-
-            return null;
-        } finally {
-            setIsCreating(false);
-        }
+        });
     };
 
 
