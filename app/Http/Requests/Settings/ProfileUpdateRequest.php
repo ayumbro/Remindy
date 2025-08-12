@@ -17,7 +17,7 @@ class ProfileUpdateRequest extends FormRequest
     public function rules(): array
     {
         $validDateFormats = ['Y-m-d', 'm/d/Y', 'd/m/Y'];
-        $validLocales = ['en', 'zh-CN'];
+        $validLocales = array_keys(\App\Http\Middleware\SetLocale::SUPPORTED_LOCALES);
 
         return [
             'name' => ['required', 'string', 'max:255'],
