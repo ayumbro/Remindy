@@ -16,10 +16,8 @@ class EnsureRegistrationEnabled
     public function handle(Request $request, Closure $next): Response
     {
         if (!config('app.enable_registration')) {
-            if ($request->expectsJson()) {
-                return response()->json(['message' => 'Registration is currently disabled.'], 403);
-            }
-            
+            // Always redirect to login with message, regardless of request type
+            // This ensures consistency with Inertia.js expectations
             return redirect()->route('login')->with([
                 'registrationDisabled' => true,
                 'message' => 'Registration is currently disabled. Please contact the administrator.'

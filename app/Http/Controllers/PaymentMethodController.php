@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\PaymentMethod;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -265,7 +264,7 @@ class PaymentMethodController extends Controller
     /**
      * Store a new payment method via API for inline creation.
      */
-    public function apiStore(Request $request): JsonResponse
+    public function apiStore(Request $request): Response
     {
         $user = Auth::user();
 
@@ -296,7 +295,7 @@ class PaymentMethodController extends Controller
                 'is_active' => true,
             ]);
 
-            return response()->json([
+            return Inertia::render('api/success', [
                 'success' => true,
                 'payment_method' => [
                     'id' => $paymentMethod->id,
@@ -307,7 +306,7 @@ class PaymentMethodController extends Controller
                 'message' => "Payment method '{$paymentMethod->name}' created successfully!",
             ]);
         } catch (\Exception) {
-            return response()->json([
+            return Inertia::render('api/error', [
                 'success' => false,
                 'message' => 'Failed to create payment method. Please try again.',
             ], 500);

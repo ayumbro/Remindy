@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -180,7 +179,7 @@ class CategoryController extends Controller
     /**
      * Store a newly created category via API (for inline creation).
      */
-    public function apiStore(Request $request): JsonResponse
+    public function apiStore(Request $request): Response
     {
         $user = Auth::user();
 
@@ -208,7 +207,8 @@ class CategoryController extends Controller
             'is_active' => true,
         ]);
 
-        return response()->json([
+        // Return an Inertia response with the data in props
+        return Inertia::render('api/success', [
             'success' => true,
             'category' => [
                 'id' => $category->id,
