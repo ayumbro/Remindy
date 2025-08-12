@@ -911,7 +911,31 @@ class Subscription extends Model
     public function areNotificationsEnabled(): bool
     {
         $settings = $this->getEffectiveNotificationSettings();
-        return $settings['notifications_enabled'] && 
+        return $settings['notifications_enabled'] &&
                ($settings['email_enabled'] || $settings['webhook_enabled']);
+    }
+
+    /**
+     * Check if this subscription can be deleted.
+     * Subscriptions cannot be deleted if they have associated payment history records
+     * to preserve audit trail and transaction history.
+     */
+    public function canBeDeleted(): bool
+    {
+        return !$this->paymentHistories()->exists();
+    }
+
+    /**
+     * Get the reason why this subscription cannot be deleted.
+     */
+    public function getDeletionBlockReason(): ?string
+    {
+        $paymentHistoryCount = $this->paymentHistories()->count();
+
+        if ($paymentHistoryCount > 0) {
+            return "This subscription has {$paymentHistoryCount} payment history record(s) and cannot be deleted to preserve transaction history for audit purposes.";
+        }
+
+        return null;
     }
 }

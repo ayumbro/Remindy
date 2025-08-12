@@ -500,10 +500,16 @@ class SubscriptionController extends Controller
     {
         $this->authorize('delete', $subscription);
 
+        // Check if subscription can be deleted
+        if (!$subscription->canBeDeleted()) {
+            return back()->withErrors(['subscription' => $subscription->getDeletionBlockReason()]);
+        }
+
+        $subscriptionName = $subscription->name;
         $subscription->delete();
 
         return to_route('subscriptions.index')
-            ->with('success', 'Subscription deleted successfully.');
+            ->with('success', "Subscription '{$subscriptionName}' deleted successfully.");
     }
 
     /**

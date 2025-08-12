@@ -58,6 +58,8 @@ export default function SubscriptionShow({ subscription }: SubscriptionShowProps
         payment_date: string;
         currency: { symbol: string; code: string };
     } | null>(null);
+    const [subscriptionToDelete, setSubscriptionToDelete] = useState<boolean>(false);
+    const [deletionError, setDeletionError] = useState<string | null>(null);
 
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -114,6 +116,26 @@ export default function SubscriptionShow({ subscription }: SubscriptionShowProps
         router.delete(`/payment-histories/${payment.id}`, {
             onSuccess: () => {
                 setPaymentToDelete(null);
+            },
+        });
+    };
+
+    const handleDeleteSubscription = () => {
+        // Clear any previous error
+        setDeletionError(null);
+
+        router.delete(`/subscriptions/${subscription.id}`, {
+            onSuccess: () => {
+                setSubscriptionToDelete(false);
+                setDeletionError(null);
+            },
+            onError: (errors) => {
+                // Handle validation errors from the backend
+                if (errors.subscription) {
+                    setDeletionError(errors.subscription);
+                } else {
+                    setDeletionError('An error occurred while trying to delete the subscription.');
+                }
             },
         });
     };
@@ -178,6 +200,13 @@ export default function SubscriptionShow({ subscription }: SubscriptionShowProps
                                 <Link href={`/subscriptions/${subscription.id}/payments/create`}>Mark Paid</Link>
                             </Button>
                         )}
+                        <Button
+                            variant="destructive"
+                            onClick={() => setSubscriptionToDelete(true)}
+                        >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                        </Button>
                     </div>
                 </div>
 
@@ -381,6 +410,41 @@ export default function SubscriptionShow({ subscription }: SubscriptionShowProps
                     </DialogContent>
                 </Dialog>
 
+                {/* Delete Subscription Confirmation Dialog */}
+                <Dialog open={subscriptionToDelete} onOpenChange={() => {
+                    setSubscriptionToDelete(false);
+                    setDeletionError(null);
+                }}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Delete Subscription</DialogTitle>
+                            <DialogDescription>
+                                Are you sure you want to delete the subscription "{subscription.name}"?
+                                <br />
+                                <br />
+                                <strong>Note:</strong> Subscriptions with payment history cannot be deleted to preserve transaction records for audit purposes.
+                                {deletionError && (
+                                    <>
+                                        <br />
+                                        <br />
+                                        <span className="text-red-600 font-medium">{deletionError}</span>
+                                    </>
+                                )}
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => {
+                                setSubscriptionToDelete(false);
+                                setDeletionError(null);
+                            }}>
+                                Cancel
+                            </Button>
+                            <Button variant="destructive" onClick={handleDeleteSubscription}>
+                                Delete Subscription
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
 
             </div>
         </AppLayout>
