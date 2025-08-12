@@ -45,6 +45,13 @@ class SetLocale
     
     /**
      * Determine the locale to use for the request
+     *
+     * Priority order:
+     * 1. URL parameter (for immediate language switching)
+     * 2. User preference (if authenticated) - takes precedence over session
+     * 3. Session (for guest users or when user has no preference)
+     * 4. Browser preference (Accept-Language header)
+     * 5. Default application locale
      */
     private function determineLocale(Request $request): string
     {
@@ -52,34 +59,34 @@ class SetLocale
         if ($request->has('locale') && $this->isValidLocale($request->get('locale'))) {
             $locale = $request->get('locale');
             Session::put('locale', $locale);
-            
+
             // Update user's preference if authenticated
             if ($request->user()) {
                 $request->user()->update(['locale' => $locale]);
             }
-            
+
             return $locale;
         }
-        
-        // Priority 2: Session
-        if (Session::has('locale') && $this->isValidLocale(Session::get('locale'))) {
-            return Session::get('locale');
-        }
-        
-        // Priority 3: User preference (if authenticated)
+
+        // Priority 2: User preference (if authenticated) - should take precedence over session
         if ($request->user() && $this->isValidLocale($request->user()->locale)) {
             $locale = $request->user()->locale;
             Session::put('locale', $locale);
             return $locale;
         }
-        
+
+        // Priority 3: Session (for guest users or when user has no preference)
+        if (Session::has('locale') && $this->isValidLocale(Session::get('locale'))) {
+            return Session::get('locale');
+        }
+
         // Priority 4: Browser preference
         $browserLocale = $this->detectBrowserLocale($request);
         if ($browserLocale) {
             Session::put('locale', $browserLocale);
             return $browserLocale;
         }
-        
+
         // Default
         return config('app.locale', 'en');
     }
