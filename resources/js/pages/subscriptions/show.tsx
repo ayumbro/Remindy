@@ -234,7 +234,7 @@ export default function SubscriptionShow({ subscription }: SubscriptionShowProps
 
                             <div>
                                 <label className="text-muted-foreground text-sm font-medium">First Billing Date</label>
-                                <p>{formatDate(subscription.next_billing_date, userDateFormat)}</p>
+                                <p>{formatDate(subscription.first_billing_date, userDateFormat)}</p>
                             </div>
 
                             {/* Only show next billing date for active subscriptions */}

@@ -252,23 +252,39 @@ class SubscriptionController extends Controller
             'notifications_enabled' => $validated['notifications_enabled'] ?? true,
             'use_default_notifications' => $validated['use_default_notifications'] ?? true,
             'email_enabled' => $validated['email_enabled'] ?? true,
+            'webhook_enabled' => $validated['webhook_enabled'] ?? false,
             'reminder_intervals' => $validated['reminder_intervals'] ?? null,
         ];
 
         // Set notification preferences for the subscription
-        if ($notificationData['notifications_enabled'] && ! $notificationData['use_default_notifications']) {
-            // Use custom notification settings
+        if ($notificationData['notifications_enabled']) {
+            if ($notificationData['use_default_notifications']) {
+                // Use default notification settings - inherit user's defaults as initial values
+                $subscription->update([
+                    'use_default_notifications' => true,
+                    'notifications_enabled' => true,
+                    'email_enabled' => $user->default_email_enabled,
+                    'webhook_enabled' => $user->default_webhook_enabled,
+                    'reminder_intervals' => $user->getDefaultReminderIntervalsWithFallback(),
+                ]);
+            } else {
+                // Use custom notification settings
+                $subscription->update([
+                    'use_default_notifications' => false,
+                    'notifications_enabled' => true,
+                    'email_enabled' => $notificationData['email_enabled'],
+                    'webhook_enabled' => $notificationData['webhook_enabled'],
+                    'reminder_intervals' => $notificationData['reminder_intervals'] ?? $user->default_reminder_intervals ?? [7, 3, 1],
+                ]);
+            }
+        } else {
+            // Notifications disabled
             $subscription->update([
                 'use_default_notifications' => false,
-                'notifications_enabled' => true,
-                'email_enabled' => $notificationData['email_enabled'],
-                'webhook_enabled' => $notificationData['webhook_enabled'] ?? false,
-                'reminder_intervals' => $notificationData['reminder_intervals'] ?? $user->default_reminder_intervals ?? [7, 3, 1],
-            ]);
-        } else {
-            // Use default notification settings
-            $subscription->update([
-                'use_default_notifications' => true,
+                'notifications_enabled' => false,
+                'email_enabled' => false,
+                'webhook_enabled' => false,
+                'reminder_intervals' => null,
             ]);
         }
 
@@ -413,6 +429,8 @@ class SubscriptionController extends Controller
     {
         $this->authorize('update', $subscription);
 
+        $user = $subscription->user;
+
         // Convert "none" to null for payment_method_id
         $requestData = $request->all();
         if (isset($requestData['payment_method_id']) && $requestData['payment_method_id'] === 'none') {
@@ -454,30 +472,42 @@ class SubscriptionController extends Controller
             'notifications_enabled' => $validated['notifications_enabled'] ?? false,
             'use_default_notifications' => $validated['use_default_notifications'] ?? true,
             'email_enabled' => $validated['email_enabled'] ?? true,
+            'webhook_enabled' => $validated['webhook_enabled'] ?? false,
             'reminder_intervals' => $validated['reminder_intervals'] ?? [7, 3, 1],
         ];
         unset($validated['notifications_enabled'], $validated['use_default_notifications'],
-            $validated['email_enabled'], $validated['reminder_intervals']);
+            $validated['email_enabled'], $validated['webhook_enabled'], $validated['reminder_intervals']);
 
         $subscription->update($validated);
 
         // Handle notification preferences
-        if ($notificationData['notifications_enabled'] && ! $notificationData['use_default_notifications']) {
-            // Use custom notification settings
+        if ($notificationData['notifications_enabled']) {
+            if ($notificationData['use_default_notifications']) {
+                // Use default notification settings - inherit current user defaults
+                $subscription->update([
+                    'use_default_notifications' => true,
+                    'notifications_enabled' => true,
+                    'email_enabled' => $user->default_email_enabled,
+                    'webhook_enabled' => $user->default_webhook_enabled,
+                    'reminder_intervals' => $user->getDefaultReminderIntervalsWithFallback(),
+                ]);
+            } else {
+                // Use custom notification settings
+                $subscription->update([
+                    'use_default_notifications' => false,
+                    'notifications_enabled' => true,
+                    'email_enabled' => $notificationData['email_enabled'],
+                    'webhook_enabled' => $notificationData['webhook_enabled'],
+                    'reminder_intervals' => $notificationData['reminder_intervals'],
+                ]);
+            }
+        } else {
+            // Notifications disabled
             $subscription->update([
                 'use_default_notifications' => false,
-                'notifications_enabled' => true,
-                'email_enabled' => $notificationData['email_enabled'],
-                'webhook_enabled' => $notificationData['webhook_enabled'] ?? false,
-                'reminder_intervals' => $notificationData['reminder_intervals'],
-            ]);
-        } else {
-            // Reset to use default notification settings
-            $subscription->update([
-                'use_default_notifications' => true,
-                'notifications_enabled' => null,
-                'email_enabled' => null,
-                'webhook_enabled' => null,
+                'notifications_enabled' => false,
+                'email_enabled' => false,
+                'webhook_enabled' => false,
                 'reminder_intervals' => null,
             ]);
         }

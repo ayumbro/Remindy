@@ -163,13 +163,12 @@ export default function EditSubscription({
         website_url: subscription?.website_url || '',
         notes: subscription?.notes || '',
         category_ids: subscription?.categories?.map((cat) => cat.id) || [],
-        // Notification settings
-        notifications_enabled: subscription?.notification_settings ? true : false,
-        use_default_notifications: !subscription?.notification_settings,
-        email_enabled: subscription?.notification_settings?.email_enabled ?? defaultNotificationSettings?.email_enabled ?? true,
-        webhook_enabled: subscription?.notification_settings?.webhook_enabled ?? defaultNotificationSettings?.webhook_enabled ?? false,
-        reminder_intervals: subscription?.notification_settings?.reminder_intervals ??
-            defaultNotificationSettings?.reminder_intervals ?? [7, 3, 1],
+        // Notification settings - use actual database fields, not effective settings
+        notifications_enabled: subscription?.notifications_enabled ?? true,
+        use_default_notifications: subscription?.use_default_notifications ?? true,
+        email_enabled: subscription?.email_enabled ?? defaultNotificationSettings?.email_enabled ?? true,
+        webhook_enabled: subscription?.webhook_enabled ?? defaultNotificationSettings?.webhook_enabled ?? false,
+        reminder_intervals: subscription?.reminder_intervals ?? defaultNotificationSettings?.reminder_intervals ?? [7, 3, 1],
     });
 
     // Helper function to handle interval changes
