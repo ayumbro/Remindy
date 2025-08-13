@@ -20,7 +20,21 @@ class CategoryCreationApiTest extends TestCase
                 'name' => 'New Test Category',
             ]);
 
+        // Our new approach returns a JSON response for axios consumption
         $response->assertStatus(200);
+
+        // Check that the JSON response contains the correct data
+        $response->assertJson([
+            'success' => true,
+            'category' => [
+                'name' => 'New Test Category',
+            ],
+        ]);
+
+        $responseData = $response->json();
+        $this->assertTrue($responseData['success']);
+        $this->assertEquals('New Test Category', $responseData['category']['name']);
+        $this->assertArrayHasKey('display_color', $responseData['category']);
 
         // Verify category was created in database
         $this->assertDatabaseHas('categories', [

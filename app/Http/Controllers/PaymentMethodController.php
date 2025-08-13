@@ -264,7 +264,7 @@ class PaymentMethodController extends Controller
     /**
      * Store a new payment method via API for inline creation.
      */
-    public function apiStore(Request $request): Response
+    public function apiStore(Request $request)
     {
         $user = Auth::user();
 
@@ -295,7 +295,8 @@ class PaymentMethodController extends Controller
                 'is_active' => true,
             ]);
 
-            return Inertia::render('api/success', [
+            // Return JSON response for axios consumption
+            return response()->json([
                 'success' => true,
                 'payment_method' => [
                     'id' => $paymentMethod->id,
@@ -306,9 +307,9 @@ class PaymentMethodController extends Controller
                 'message' => "Payment method '{$paymentMethod->name}' created successfully!",
             ]);
         } catch (\Exception) {
-            return Inertia::render('api/error', [
+            return response()->json([
                 'success' => false,
-                'message' => 'Failed to create payment method. Please try again.',
+                'message' => 'Failed to create payment method. Please try again.'
             ], 500);
         }
     }

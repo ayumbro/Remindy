@@ -179,7 +179,7 @@ class CategoryController extends Controller
     /**
      * Store a newly created category via API (for inline creation).
      */
-    public function apiStore(Request $request): Response
+    public function apiStore(Request $request)
     {
         $user = Auth::user();
 
@@ -207,8 +207,8 @@ class CategoryController extends Controller
             'is_active' => true,
         ]);
 
-        // Return an Inertia response with the data in props
-        return Inertia::render('api/success', [
+        // Return JSON response for axios consumption
+        return response()->json([
             'success' => true,
             'category' => [
                 'id' => $category->id,

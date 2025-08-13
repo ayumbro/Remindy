@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Check, ChevronDown, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { router } from '@inertiajs/react';
+import axios from 'axios';
 
 interface PaymentMethod {
     id: number;
@@ -73,18 +73,18 @@ export default function PaymentMethodSelector({
         );
 
     // Function to create a new payment method
-    const createPaymentMethod = (name: string): void => {
+    const createPaymentMethod = async (name: string): Promise<void> => {
         if (isCreating) return;
 
         setIsCreating(true);
 
-        router.post(route('api.payment-methods.store'), {
-            name: name.trim(),
-        }, {
-            onSuccess: (page) => {
-                // Extract the new payment method from the response
-                const data = page.props as any;
-                const newPaymentMethod: PaymentMethod = data.payment_method;
+        try {
+            const response = await axios.post(route('api.payment-methods.store'), {
+                name: name.trim(),
+            });
+
+            if (response.data.success && response.data.payment_method) {
+                const newPaymentMethod: PaymentMethod = response.data.payment_method;
 
                 // Add the new payment method to available options
                 setAvailablePaymentMethods(prev => [...prev, newPaymentMethod]);
@@ -99,22 +99,24 @@ export default function PaymentMethodSelector({
                 setOpen(false);
                 setSearchValue('');
                 setIsCreating(false);
-            },
-            onError: (errors) => {
-                console.error('Error creating payment method:', errors);
-
-                // Handle validation errors
-                if (errors.name) {
-                    console.error('Payment method validation error:', Array.isArray(errors.name) ? errors.name[0] : errors.name);
-                    // You might want to show a toast notification here
-                } else {
-                    console.error('Failed to create payment method');
-                }
+            } else {
+                console.error('Invalid API response format');
                 setIsCreating(false);
-            },
-            preserveState: true,
-            preserveScroll: true,
-        });
+            }
+        } catch (error: any) {
+            console.error('Error creating payment method:', error);
+
+            // Handle validation errors
+            if (error.response?.data?.errors?.name) {
+                const nameError = error.response.data.errors.name;
+                console.error('Payment method validation error:', Array.isArray(nameError) ? nameError[0] : nameError);
+            } else if (error.response?.data?.message) {
+                console.error('API error:', error.response.data.message);
+            } else {
+                console.error('Failed to create payment method');
+            }
+            setIsCreating(false);
+        }
     };
 
     const handleSelect = (paymentMethodId: string) => {

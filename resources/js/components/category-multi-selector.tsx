@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import MultipleSelector, { Option } from '@/components/ui/multiple-selector';
 import { cn } from '@/lib/utils';
-import { router } from '@inertiajs/react';
 
 interface Category {
     id: number;
@@ -63,6 +63,56 @@ export default function CategoryMultiSelector({
         selectedCategoryIds.includes(parseInt(option.value))
     );
 
+    // Function to create a new category
+    const createCategory = async (name: string): Promise<Option | null> => {
+        if (isCreating) return null;
+
+        setIsCreating(true);
+
+        try {
+            const response = await axios.post(route('api.categories.store'), {
+                name: name.trim(),
+            });
+
+            if (response.data.success && response.data.category) {
+                const newCategory: Category = response.data.category;
+
+                // Add the new category to available categories
+                setAvailableCategories(prev => [...prev, newCategory]);
+
+                // Notify parent component if callback provided
+                onCategoryCreated?.(newCategory);
+
+                // Return the new option
+                const newOption: Option = {
+                    value: newCategory.id.toString(),
+                    label: newCategory.name,
+                    color: newCategory.display_color,
+                };
+
+                setIsCreating(false);
+                return newOption;
+            } else {
+                console.error('Invalid API response format');
+                setIsCreating(false);
+                return null;
+            }
+        } catch (error: any) {
+            console.error('Error creating category:', error);
+
+            // Handle validation errors
+            if (error.response?.data?.errors?.name) {
+                const nameError = error.response.data.errors.name;
+                console.error('Category validation error:', Array.isArray(nameError) ? nameError[0] : nameError);
+            } else {
+                console.error('Failed to create category');
+            }
+
+            setIsCreating(false);
+            return null;
+        }
+    };
+
     const handleChange = async (options: Option[]) => {
         const processedOptions: Option[] = [];
         let hasFailedCreation = false;
@@ -82,86 +132,17 @@ export default function CategoryMultiSelector({
                     hasFailedCreation = true;
                 }
             } else {
-                // Check if this is an existing category selected by name (value equals label)
-                if (option.value === option.label) {
-                    // Find the existing category by name and use its proper ID
-                    const existingCategory = availableCategories.find(cat =>
-                        cat.name.toLowerCase() === option.label.toLowerCase()
-                    );
-                    if (existingCategory) {
-                        processedOptions.push({
-                            value: existingCategory.id.toString(),
-                            label: existingCategory.name,
-                            color: existingCategory.display_color,
-                        });
-                    }
-                } else {
-                    // This is already a properly formatted option with ID
-                    processedOptions.push(option);
-                }
+                // This is an existing category
+                processedOptions.push(option);
             }
         }
 
         // Only update the selection if no category creation failed
-        // This prevents losing existing selections when creation fails
         if (!hasFailedCreation) {
-            const categoryIds = processedOptions.map((option) => parseInt(option.value));
+            const categoryIds = processedOptions.map(option => parseInt(option.value));
             onCategoryChange(categoryIds);
         }
     };
-
-    // Function to create a new category
-    const createCategory = (name: string): Promise<Option | null> => {
-        if (isCreating) return Promise.resolve(null);
-
-        setIsCreating(true);
-
-        return new Promise((resolve) => {
-            router.post(route('api.categories.store'), {
-                name: name.trim(),
-            }, {
-                onSuccess: (page) => {
-                    // Extract the new category from the response
-                    const data = page.props as any;
-                    const newCategory: Category = data.category;
-
-                    // Add the new category to available categories
-                    setAvailableCategories(prev => [...prev, newCategory]);
-
-                    // Notify parent component if callback provided
-                    onCategoryCreated?.(newCategory);
-
-                    // Return the new option
-                    const newOption: Option = {
-                        value: newCategory.id.toString(),
-                        label: newCategory.name,
-                        color: newCategory.display_color,
-                    };
-
-                    setIsCreating(false);
-                    resolve(newOption);
-                },
-                onError: (errors) => {
-                    console.error('Error creating category:', errors);
-
-                    // Handle validation errors
-                    if (errors.name) {
-                        console.error('Category validation error:', Array.isArray(errors.name) ? errors.name[0] : errors.name);
-                        // You might want to show a toast notification here
-                    } else {
-                        console.error('Failed to create category');
-                    }
-
-                    setIsCreating(false);
-                    resolve(null);
-                },
-                preserveState: true,
-                preserveScroll: true,
-            });
-        });
-    };
-
-
 
     return (
         <div className="space-y-2">
