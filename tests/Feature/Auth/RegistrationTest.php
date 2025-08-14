@@ -35,7 +35,7 @@ class RegistrationTest extends TestCase
         // Enable registration for this test
         Config::set('app.enable_registration', true);
 
-        $response = $this->post('/register', [
+        $response = $this->postWithCsrf('/register', [
             'name' => 'Test User',
             'email' => 'test@example.com',
             'password' => 'password',
@@ -51,7 +51,7 @@ class RegistrationTest extends TestCase
         // Disable registration for this test
         Config::set('app.enable_registration', false);
 
-        $response = $this->post('/register', [
+        $response = $this->postWithCsrf('/register', [
             'name' => 'Test User',
             'email' => 'test@example.com',
             'password' => 'password',

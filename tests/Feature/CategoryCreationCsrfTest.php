@@ -38,12 +38,7 @@ class CategoryCreationCsrfTest extends TestCase
 
         // Test with proper CSRF token - should work
         $response = $this->actingAs($user)
-            ->withHeaders([
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-                'X-CSRF-TOKEN' => csrf_token(),
-            ])
-            ->postJson(route('api.categories.store'), [
+            ->postJsonWithCsrf(route('api.categories.store'), [
                 'name' => 'Test Category with CSRF',
             ]);
 

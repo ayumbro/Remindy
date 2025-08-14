@@ -205,7 +205,7 @@ class LocalizationTest extends TestCase
 
         // Update user's locale preference via profile update
         $response = $this->actingAs($user)
-            ->patch('/settings/profile', [
+            ->patchWithCsrf('/settings/profile', [
                 'name' => $user->name,
                 'email' => $user->email,
                 'date_format' => $user->date_format ?? 'Y-m-d',

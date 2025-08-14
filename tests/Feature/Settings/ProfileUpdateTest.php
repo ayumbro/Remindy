@@ -27,7 +27,7 @@ class ProfileUpdateTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->patch('/settings/profile', [
+            ->patchWithCsrf('/settings/profile', [
                 'name' => 'Test User',
                 'email' => 'test@example.com',
                 'date_format' => 'm/d/Y',
@@ -53,7 +53,7 @@ class ProfileUpdateTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->patch('/settings/profile', [
+            ->patchWithCsrf('/settings/profile', [
                 'name' => 'Test User',
                 'email' => $user->email,
                 'date_format' => $user->date_format ?? 'Y-m-d',
@@ -73,7 +73,7 @@ class ProfileUpdateTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->delete('/settings/profile', [
+            ->deleteWithCsrf('/settings/profile', [
                 'password' => 'password',
             ]);
 
@@ -92,7 +92,7 @@ class ProfileUpdateTest extends TestCase
         $response = $this
             ->actingAs($user)
             ->from('/settings/profile')
-            ->delete('/settings/profile', [
+            ->deleteWithCsrf('/settings/profile', [
                 'password' => 'wrong-password',
             ]);
 
@@ -112,7 +112,7 @@ class ProfileUpdateTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->patch('/settings/profile', [
+            ->patchWithCsrf('/settings/profile', [
                 'name' => $user->name,
                 'email' => $user->email,
                 'date_format' => 'd/m/Y',
@@ -135,7 +135,7 @@ class ProfileUpdateTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->patch('/settings/profile', [
+            ->patchWithCsrf('/settings/profile', [
                 'name' => $user->name,
                 'email' => $user->email,
                 'date_format' => 'invalid-format',
@@ -151,7 +151,7 @@ class ProfileUpdateTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->patch('/settings/profile', [
+            ->patchWithCsrf('/settings/profile', [
                 'name' => $user->name,
                 'email' => $user->email,
                 'date_format' => 'Y-m-d',

@@ -62,7 +62,7 @@ class SimpleEnhancedMarkPaidTest extends TestCase
         ];
 
         $response = $this->actingAs($this->user)
-            ->post("/subscriptions/{$subscription->id}/mark-paid", $paymentData);
+            ->postWithCsrf("/subscriptions/{$subscription->id}/mark-paid", $paymentData);
 
         $response->assertRedirect();
 
@@ -97,7 +97,7 @@ class SimpleEnhancedMarkPaidTest extends TestCase
         ];
 
         $response = $this->actingAs($this->user)
-            ->put("/payment-histories/{$paymentHistory->id}", $updateData);
+            ->putWithCsrf("/payment-histories/{$paymentHistory->id}", $updateData);
 
         $response->assertRedirect();
 
@@ -115,7 +115,7 @@ class SimpleEnhancedMarkPaidTest extends TestCase
 
         // Test missing amount
         $response = $this->actingAs($this->user)
-            ->post("/subscriptions/{$subscription->id}/mark-paid", [
+            ->postWithCsrf("/subscriptions/{$subscription->id}/mark-paid", [
                 'payment_date' => '2024-01-15',
                 'currency_id' => $this->currency->id,
             ]);
@@ -123,7 +123,7 @@ class SimpleEnhancedMarkPaidTest extends TestCase
 
         // Test invalid amount
         $response = $this->actingAs($this->user)
-            ->post("/subscriptions/{$subscription->id}/mark-paid", [
+            ->postWithCsrf("/subscriptions/{$subscription->id}/mark-paid", [
                 'amount' => '0',
                 'payment_date' => '2024-01-15',
                 'currency_id' => $this->currency->id,
@@ -132,7 +132,7 @@ class SimpleEnhancedMarkPaidTest extends TestCase
 
         // Test missing payment date
         $response = $this->actingAs($this->user)
-            ->post("/subscriptions/{$subscription->id}/mark-paid", [
+            ->postWithCsrf("/subscriptions/{$subscription->id}/mark-paid", [
                 'amount' => '9.99',
                 'currency_id' => $this->currency->id,
             ]);
@@ -173,7 +173,7 @@ class SimpleEnhancedMarkPaidTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user)
-            ->put("/payment-histories/{$otherPaymentHistory->id}", [
+            ->putWithCsrf("/payment-histories/{$otherPaymentHistory->id}", [
                 'amount' => '9.99',
                 'payment_date' => '2024-01-15',
                 'currency_id' => $this->currency->id,

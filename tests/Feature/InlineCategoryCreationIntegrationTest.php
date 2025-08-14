@@ -34,7 +34,7 @@ class InlineCategoryCreationIntegrationTest extends TestCase
 
         // Step 2: User creates a new category via API (simulating inline creation)
         $newCategoryResponse = $this->actingAs($user)
-            ->postJson(route('api.categories.store'), [
+            ->postJsonWithCsrf(route('api.categories.store'), [
                 'name' => 'Streaming Services',
             ]);
 
@@ -70,7 +70,7 @@ class InlineCategoryCreationIntegrationTest extends TestCase
         ];
 
         $createResponse = $this->actingAs($user)
-            ->post(route('subscriptions.store'), $subscriptionData);
+            ->postWithCsrf(route('subscriptions.store'), $subscriptionData);
 
         $createResponse->assertRedirect();
 
@@ -112,7 +112,7 @@ class InlineCategoryCreationIntegrationTest extends TestCase
 
         // Step 2: User creates a new category via API during editing
         $newCategoryResponse = $this->actingAs($user)
-            ->postJson(route('api.categories.store'), [
+            ->postJsonWithCsrf(route('api.categories.store'), [
                 'name' => 'Entertainment',
             ]);
 
@@ -162,7 +162,7 @@ class InlineCategoryCreationIntegrationTest extends TestCase
 
         // Try to create a category with the same name
         $response = $this->actingAs($user)
-            ->postJson(route('api.categories.store'), [
+            ->postJsonWithCsrf(route('api.categories.store'), [
                 'name' => 'Utilities',
             ]);
 
@@ -180,7 +180,7 @@ class InlineCategoryCreationIntegrationTest extends TestCase
 
         // User 1 creates a category
         $response1 = $this->actingAs($user1)
-            ->postJson(route('api.categories.store'), [
+            ->postJsonWithCsrf(route('api.categories.store'), [
                 'name' => 'Personal',
             ]);
 
@@ -188,7 +188,7 @@ class InlineCategoryCreationIntegrationTest extends TestCase
 
         // User 2 should be able to create a category with the same name
         $response2 = $this->actingAs($user2)
-            ->postJson(route('api.categories.store'), [
+            ->postJsonWithCsrf(route('api.categories.store'), [
                 'name' => 'Personal',
             ]);
 
@@ -205,7 +205,7 @@ class InlineCategoryCreationIntegrationTest extends TestCase
         $defaultColors = Category::getDefaultColors();
 
         $response = $this->actingAs($user)
-            ->postJson(route('api.categories.store'), [
+            ->postJsonWithCsrf(route('api.categories.store'), [
                 'name' => 'Test Category',
             ]);
 

@@ -53,7 +53,7 @@ class SubscriptionEditTest extends TestCase
         $originalBillingInterval = $this->subscription->billing_interval;
 
         $response = $this->actingAs($this->user)
-            ->put("/subscriptions/{$this->subscription->id}", [
+            ->putWithCsrf("/subscriptions/{$this->subscription->id}", [
                 'name' => 'Updated Subscription Name',
                 'price' => 15.99,
                 'currency_id' => $this->currency->id,
@@ -84,7 +84,7 @@ class SubscriptionEditTest extends TestCase
         $originalBillingInterval = $this->subscription->billing_interval;
 
         $response = $this->actingAs($this->user)
-            ->put("/subscriptions/{$this->subscription->id}", [
+            ->putWithCsrf("/subscriptions/{$this->subscription->id}", [
                 'name' => 'Updated Subscription Name',
                 'price' => 15.99,
                 'currency_id' => $this->currency->id,
@@ -121,7 +121,7 @@ class SubscriptionEditTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user)
-            ->put("/subscriptions/{$otherSubscription->id}", [
+            ->putWithCsrf("/subscriptions/{$otherSubscription->id}", [
                 'name' => 'Hacked Subscription',
                 'price' => 999.99,
                 'currency_id' => $this->currency->id,
@@ -136,7 +136,7 @@ class SubscriptionEditTest extends TestCase
 
     public function test_guest_cannot_edit_subscription()
     {
-        $response = $this->put("/subscriptions/{$this->subscription->id}", [
+        $response = $this->putWithCsrf("/subscriptions/{$this->subscription->id}", [
             'name' => 'Hacked Subscription',
             'price' => 999.99,
             'currency_id' => $this->currency->id,

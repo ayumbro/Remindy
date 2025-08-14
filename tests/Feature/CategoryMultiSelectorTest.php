@@ -83,7 +83,7 @@ class CategoryMultiSelectorTest extends TestCase
         ];
 
         $response = $this->actingAs($user)
-            ->post(route('subscriptions.store'), $subscriptionData);
+            ->postWithCsrf(route('subscriptions.store'), $subscriptionData);
 
         $response->assertRedirect();
 
@@ -127,7 +127,7 @@ class CategoryMultiSelectorTest extends TestCase
         ];
 
         $response = $this->actingAs($user)
-            ->put(route('subscriptions.update', $subscription), $updateData);
+            ->putWithCsrf(route('subscriptions.update', $subscription), $updateData);
 
         $response->assertRedirect();
 
@@ -162,7 +162,7 @@ class CategoryMultiSelectorTest extends TestCase
         ];
 
         $response = $this->actingAs($user)
-            ->post(route('subscriptions.store'), $subscriptionData);
+            ->postWithCsrf(route('subscriptions.store'), $subscriptionData);
 
         $response->assertRedirect();
 

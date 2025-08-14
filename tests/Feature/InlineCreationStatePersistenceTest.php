@@ -34,7 +34,7 @@ class InlineCreationStatePersistenceTest extends TestCase
 
         // Step 2: User creates a new category via API (simulating inline creation)
         $newCategoryResponse = $this->actingAs($user)
-            ->postJson(route('api.categories.store'), [
+            ->postJsonWithCsrf(route('api.categories.store'), [
                 'name' => 'Newly Created Category',
             ]);
 
@@ -70,7 +70,7 @@ class InlineCreationStatePersistenceTest extends TestCase
         ];
 
         $createResponse = $this->actingAs($user)
-            ->post(route('subscriptions.store'), $subscriptionData);
+            ->postWithCsrf(route('subscriptions.store'), $subscriptionData);
 
         $createResponse->assertRedirect();
 
@@ -113,7 +113,7 @@ class InlineCreationStatePersistenceTest extends TestCase
         ];
 
         $updateResponse = $this->actingAs($user)
-            ->put(route('subscriptions.update', $subscription), $updateData);
+            ->putWithCsrf(route('subscriptions.update', $subscription), $updateData);
 
         $updateResponse->assertRedirect();
 
@@ -163,7 +163,7 @@ class InlineCreationStatePersistenceTest extends TestCase
 
         // Step 2: User creates a new payment method via API (simulating inline creation)
         $newPaymentMethodResponse = $this->actingAs($user)
-            ->postJson(route('api.payment-methods.store'), [
+            ->postJsonWithCsrf(route('api.payment-methods.store'), [
                 'name' => 'Newly Created Payment Method',
             ]);
 
@@ -196,7 +196,7 @@ class InlineCreationStatePersistenceTest extends TestCase
         ];
 
         $createResponse = $this->actingAs($user)
-            ->post(route('subscriptions.store'), $subscriptionData);
+            ->postWithCsrf(route('subscriptions.store'), $subscriptionData);
 
         $createResponse->assertRedirect();
 
@@ -233,7 +233,7 @@ class InlineCreationStatePersistenceTest extends TestCase
         ];
 
         $updateResponse = $this->actingAs($user)
-            ->put(route('subscriptions.update', $subscription), $updateData);
+            ->putWithCsrf(route('subscriptions.update', $subscription), $updateData);
 
         $updateResponse->assertRedirect();
 
@@ -273,7 +273,7 @@ class InlineCreationStatePersistenceTest extends TestCase
 
         // Step 1: Create a category via API (simulating successful inline creation)
         $firstCategoryResponse = $this->actingAs($user)
-            ->postJson(route('api.categories.store'), [
+            ->postJsonWithCsrf(route('api.categories.store'), [
                 'name' => 'test1',
             ]);
 
@@ -309,7 +309,7 @@ class InlineCreationStatePersistenceTest extends TestCase
         ];
 
         $createResponse = $this->actingAs($user)
-            ->post(route('subscriptions.store'), $subscriptionData);
+            ->postWithCsrf(route('subscriptions.store'), $subscriptionData);
 
         $createResponse->assertRedirect();
 
@@ -322,7 +322,7 @@ class InlineCreationStatePersistenceTest extends TestCase
 
         // Step 4: Try to create a duplicate category (this should fail)
         $duplicateCategoryResponse = $this->actingAs($user)
-            ->postJson(route('api.categories.store'), [
+            ->postJsonWithCsrf(route('api.categories.store'), [
                 'name' => 'test1', // Same name as before
             ]);
 
@@ -379,7 +379,7 @@ class InlineCreationStatePersistenceTest extends TestCase
         ];
 
         $updateResponse = $this->actingAs($user)
-            ->put(route('subscriptions.update', $subscription), $updateData);
+            ->putWithCsrf(route('subscriptions.update', $subscription), $updateData);
 
         $updateResponse->assertRedirect();
 
@@ -401,7 +401,7 @@ class InlineCreationStatePersistenceTest extends TestCase
 
         // Step 1: Create a category via API (simulating successful inline creation)
         $newCategoryResponse = $this->actingAs($user)
-            ->postJson(route('api.categories.store'), [
+            ->postJsonWithCsrf(route('api.categories.store'), [
                 'name' => 'test2',
             ]);
 
@@ -436,7 +436,7 @@ class InlineCreationStatePersistenceTest extends TestCase
         ];
 
         $createResponse = $this->actingAs($user)
-            ->post(route('subscriptions.store'), $subscriptionData);
+            ->postWithCsrf(route('subscriptions.store'), $subscriptionData);
 
         $createResponse->assertRedirect();
 
@@ -469,7 +469,7 @@ class InlineCreationStatePersistenceTest extends TestCase
         ];
 
         $updateResponse = $this->actingAs($user)
-            ->put(route('subscriptions.update', $subscription), $updateData);
+            ->putWithCsrf(route('subscriptions.update', $subscription), $updateData);
 
         $updateResponse->assertRedirect();
 
@@ -516,7 +516,7 @@ class InlineCreationStatePersistenceTest extends TestCase
         ];
 
         $reselectResponse = $this->actingAs($user)
-            ->put(route('subscriptions.update', $subscription), $reselectData);
+            ->putWithCsrf(route('subscriptions.update', $subscription), $reselectData);
 
         $reselectResponse->assertRedirect();
 
@@ -561,7 +561,7 @@ class InlineCreationStatePersistenceTest extends TestCase
 
         // Step 2: Create a new category via API (simulating inline creation)
         $newCategoryResponse = $this->actingAs($user)
-            ->postJson(route('api.categories.store'), [
+            ->postJsonWithCsrf(route('api.categories.store'), [
                 'name' => 'new cat name',
             ]);
 
@@ -624,7 +624,7 @@ class InlineCreationStatePersistenceTest extends TestCase
         ];
 
         $createResponse = $this->actingAs($user)
-            ->post(route('subscriptions.store'), $subscriptionData);
+            ->postWithCsrf(route('subscriptions.store'), $subscriptionData);
 
         $createResponse->assertRedirect();
 

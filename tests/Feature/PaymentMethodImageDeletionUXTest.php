@@ -54,7 +54,7 @@ class PaymentMethodImageDeletionUXTest extends TestCase
         $file = UploadedFile::fake()->image('test-image.jpg');
 
         $this->actingAs($this->user)
-            ->put("/payment-methods/{$this->paymentMethod->id}", [
+            ->putWithCsrf("/payment-methods/{$this->paymentMethod->id}", [
                 'name' => $this->paymentMethod->name,
                 'description' => $this->paymentMethod->description,
                 'is_active' => $this->paymentMethod->is_active,
@@ -66,7 +66,7 @@ class PaymentMethodImageDeletionUXTest extends TestCase
 
         // Now test the UX flow: mark image for deletion
         $response = $this->actingAs($this->user)
-            ->put("/payment-methods/{$this->paymentMethod->id}", [
+            ->putWithCsrf("/payment-methods/{$this->paymentMethod->id}", [
                 'name' => $this->paymentMethod->name,
                 'description' => $this->paymentMethod->description,
                 'is_active' => $this->paymentMethod->is_active,
@@ -89,7 +89,7 @@ class PaymentMethodImageDeletionUXTest extends TestCase
         $file = UploadedFile::fake()->image('test-image.png');
 
         $this->actingAs($this->user)
-            ->put("/payment-methods/{$this->paymentMethod->id}", [
+            ->putWithCsrf("/payment-methods/{$this->paymentMethod->id}", [
                 'name' => $this->paymentMethod->name,
                 'description' => $this->paymentMethod->description,
                 'is_active' => $this->paymentMethod->is_active,
@@ -103,7 +103,7 @@ class PaymentMethodImageDeletionUXTest extends TestCase
         $newDescription = 'Updated description';
 
         $response = $this->actingAs($this->user)
-            ->put("/payment-methods/{$this->paymentMethod->id}", [
+            ->putWithCsrf("/payment-methods/{$this->paymentMethod->id}", [
                 'name' => $newName,
                 'description' => $newDescription,
                 'is_active' => 0, // Change status (use 0 instead of false)
@@ -130,7 +130,7 @@ class PaymentMethodImageDeletionUXTest extends TestCase
         $file = UploadedFile::fake()->image('test-image.png');
 
         $this->actingAs($this->user)
-            ->put("/payment-methods/{$this->paymentMethod->id}", [
+            ->putWithCsrf("/payment-methods/{$this->paymentMethod->id}", [
                 'name' => $this->paymentMethod->name,
                 'description' => $this->paymentMethod->description,
                 'is_active' => $this->paymentMethod->is_active,
@@ -142,7 +142,7 @@ class PaymentMethodImageDeletionUXTest extends TestCase
 
         // Try to update with invalid data AND remove image
         $response = $this->actingAs($this->user)
-            ->put("/payment-methods/{$this->paymentMethod->id}", [
+            ->putWithCsrf("/payment-methods/{$this->paymentMethod->id}", [
                 'name' => '', // Invalid: empty name
                 'description' => $this->paymentMethod->description,
                 'is_active' => $this->paymentMethod->is_active,
@@ -173,7 +173,7 @@ class PaymentMethodImageDeletionUXTest extends TestCase
         $file = UploadedFile::fake()->image('show-page-test.jpg');
 
         $this->actingAs($this->user)
-            ->put("/payment-methods/{$this->paymentMethod->id}", [
+            ->putWithCsrf("/payment-methods/{$this->paymentMethod->id}", [
                 'name' => $this->paymentMethod->name,
                 'description' => $this->paymentMethod->description,
                 'is_active' => $this->paymentMethod->is_active,
@@ -185,7 +185,7 @@ class PaymentMethodImageDeletionUXTest extends TestCase
 
         // Test image deletion from show page (using the same update endpoint)
         $response = $this->actingAs($this->user)
-            ->put("/payment-methods/{$this->paymentMethod->id}", [
+            ->putWithCsrf("/payment-methods/{$this->paymentMethod->id}", [
                 'name' => $this->paymentMethod->name,
                 'description' => $this->paymentMethod->description,
                 'is_active' => $this->paymentMethod->is_active,
@@ -207,7 +207,7 @@ class PaymentMethodImageDeletionUXTest extends TestCase
         $file = UploadedFile::fake()->image('create-test.jpg');
 
         $response = $this->actingAs($this->user)
-            ->post('/payment-methods', [
+            ->postWithCsrf('/payment-methods', [
                 'name' => 'New Payment Method',
                 'description' => 'New description',
                 'is_active' => true,

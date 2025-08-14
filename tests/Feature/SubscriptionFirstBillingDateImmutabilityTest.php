@@ -39,7 +39,7 @@ class SubscriptionFirstBillingDateImmutabilityTest extends TestCase
         $originalFirstBillingDate = $this->subscription->first_billing_date;
 
         $response = $this->actingAs($this->user)
-            ->put("/subscriptions/{$this->subscription->id}", [
+            ->putWithCsrf("/subscriptions/{$this->subscription->id}", [
                 'name' => 'Updated Subscription Name',
                 'price' => 15.99,
                 'currency_id' => $this->currency->id,

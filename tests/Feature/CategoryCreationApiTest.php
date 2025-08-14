@@ -16,7 +16,7 @@ class CategoryCreationApiTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)
-            ->post(route('api.categories.store'), [
+            ->postWithCsrf(route('api.categories.store'), [
                 'name' => 'New Test Category',
             ]);
 
@@ -60,7 +60,7 @@ class CategoryCreationApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)
-            ->postJson(route('api.categories.store'), [
+            ->postJsonWithCsrf(route('api.categories.store'), [
                 'name' => 'Existing Category',
             ]);
 
@@ -73,7 +73,7 @@ class CategoryCreationApiTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)
-            ->postJson(route('api.categories.store'), []);
+            ->postJsonWithCsrf(route('api.categories.store'), []);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['name']);
@@ -84,7 +84,7 @@ class CategoryCreationApiTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)
-            ->postJson(route('api.categories.store'), [
+            ->postJsonWithCsrf(route('api.categories.store'), [
                 'name' => str_repeat('a', 256), // Too long
             ]);
 
@@ -97,7 +97,7 @@ class CategoryCreationApiTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)
-            ->postJson(route('api.categories.store'), [
+            ->postJsonWithCsrf(route('api.categories.store'), [
                 'name' => '  Trimmed Category  ',
             ]);
 
@@ -112,7 +112,7 @@ class CategoryCreationApiTest extends TestCase
 
     public function test_api_requires_authentication(): void
     {
-        $response = $this->postJson(route('api.categories.store'), [
+        $response = $this->postJsonWithCsrf(route('api.categories.store'), [
             'name' => 'Test Category',
         ]);
 
@@ -132,7 +132,7 @@ class CategoryCreationApiTest extends TestCase
 
         // User 2 should be able to create a category with the same name
         $response = $this->actingAs($user2)
-            ->postJson(route('api.categories.store'), [
+            ->postJsonWithCsrf(route('api.categories.store'), [
                 'name' => 'Shared Name',
             ]);
 
@@ -151,7 +151,7 @@ class CategoryCreationApiTest extends TestCase
         $createdColors = [];
         for ($i = 0; $i < 5; $i++) {
             $response = $this->actingAs($user)
-                ->postJson(route('api.categories.store'), [
+                ->postJsonWithCsrf(route('api.categories.store'), [
                     'name' => "Test Category {$i}",
                 ]);
 

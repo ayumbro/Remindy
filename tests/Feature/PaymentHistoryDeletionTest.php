@@ -54,7 +54,7 @@ class PaymentHistoryDeletionTest extends TestCase
 
         // User should be able to delete the most recent payment
         $response = $this->actingAs($this->user)
-            ->delete("/payment-histories/{$newerPayment->id}");
+            ->deleteWithCsrf("/payment-histories/{$newerPayment->id}");
 
         $response->assertRedirect();
         $response->assertSessionHas('success', 'Payment record deleted successfully!');
@@ -85,7 +85,7 @@ class PaymentHistoryDeletionTest extends TestCase
 
         // User should NOT be able to delete the older payment
         $response = $this->actingAs($this->user)
-            ->delete("/payment-histories/{$olderPayment->id}");
+            ->deleteWithCsrf("/payment-histories/{$olderPayment->id}");
 
         $response->assertRedirect();
         $response->assertSessionHasErrors(['payment_history' => 'Only the most recent payment can be deleted.']);
@@ -112,7 +112,7 @@ class PaymentHistoryDeletionTest extends TestCase
 
         // User should NOT be able to delete payment from other user's subscription
         $response = $this->actingAs($this->user)
-            ->delete("/payment-histories/{$payment->id}");
+            ->deleteWithCsrf("/payment-histories/{$payment->id}");
 
         $response->assertStatus(403);
 
@@ -130,7 +130,7 @@ class PaymentHistoryDeletionTest extends TestCase
         ]);
 
         // Guest should be redirected to login
-        $response = $this->delete("/payment-histories/{$payment->id}");
+        $response = $this->deleteWithCsrf("/payment-histories/{$payment->id}");
 
         $response->assertRedirect('/login');
 
@@ -163,7 +163,7 @@ class PaymentHistoryDeletionTest extends TestCase
 
         // Delete the most recent payment
         $this->actingAs($this->user)
-            ->delete("/payment-histories/{$newerPayment->id}");
+            ->deleteWithCsrf("/payment-histories/{$newerPayment->id}");
 
         // After deletion: should have 1 payment, next billing date should be 2nd cycle
         $this->subscription->refresh();

@@ -33,7 +33,7 @@ class InlinePaymentMethodCreationIntegrationTest extends TestCase
 
         // Step 2: User creates a new payment method via API (simulating inline creation)
         $newPaymentMethodResponse = $this->actingAs($user)
-            ->postJson(route('api.payment-methods.store'), [
+            ->postJsonWithCsrf(route('api.payment-methods.store'), [
                 'name' => 'New Credit Card',
             ]);
 
@@ -66,7 +66,7 @@ class InlinePaymentMethodCreationIntegrationTest extends TestCase
         ];
 
         $createResponse = $this->actingAs($user)
-            ->post(route('subscriptions.store'), $subscriptionData);
+            ->postWithCsrf(route('subscriptions.store'), $subscriptionData);
 
         $createResponse->assertRedirect();
 
@@ -102,7 +102,7 @@ class InlinePaymentMethodCreationIntegrationTest extends TestCase
 
         // Step 2: User creates a new payment method via API during editing
         $newPaymentMethodResponse = $this->actingAs($user)
-            ->postJson(route('api.payment-methods.store'), [
+            ->postJsonWithCsrf(route('api.payment-methods.store'), [
                 'name' => 'Business Debit Card',
             ]);
 
@@ -147,7 +147,7 @@ class InlinePaymentMethodCreationIntegrationTest extends TestCase
 
         // Try to create a payment method with the same name
         $response = $this->actingAs($user)
-            ->postJson(route('api.payment-methods.store'), [
+            ->postJsonWithCsrf(route('api.payment-methods.store'), [
                 'name' => 'Visa Card',
             ]);
 
@@ -165,7 +165,7 @@ class InlinePaymentMethodCreationIntegrationTest extends TestCase
 
         // User 1 creates a payment method
         $response1 = $this->actingAs($user1)
-            ->postJson(route('api.payment-methods.store'), [
+            ->postJsonWithCsrf(route('api.payment-methods.store'), [
                 'name' => 'Personal Card',
             ]);
 
@@ -173,7 +173,7 @@ class InlinePaymentMethodCreationIntegrationTest extends TestCase
 
         // User 2 should be able to create a payment method with the same name
         $response2 = $this->actingAs($user2)
-            ->postJson(route('api.payment-methods.store'), [
+            ->postJsonWithCsrf(route('api.payment-methods.store'), [
                 'name' => 'Personal Card',
             ]);
 
@@ -189,7 +189,7 @@ class InlinePaymentMethodCreationIntegrationTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)
-            ->postJson(route('api.payment-methods.store'), [
+            ->postJsonWithCsrf(route('api.payment-methods.store'), [
                 'name' => 'Test Payment Method',
             ]);
 
@@ -225,7 +225,7 @@ class InlinePaymentMethodCreationIntegrationTest extends TestCase
         ];
 
         $createResponse = $this->actingAs($user)
-            ->post(route('subscriptions.store'), $subscriptionData);
+            ->postWithCsrf(route('subscriptions.store'), $subscriptionData);
 
         $createResponse->assertRedirect();
 
@@ -245,7 +245,7 @@ class InlinePaymentMethodCreationIntegrationTest extends TestCase
 
         // Step 1: Create new category via API
         $newCategoryResponse = $this->actingAs($user)
-            ->postJson(route('api.categories.store'), [
+            ->postJsonWithCsrf(route('api.categories.store'), [
                 'name' => 'Entertainment',
             ]);
 
@@ -254,7 +254,7 @@ class InlinePaymentMethodCreationIntegrationTest extends TestCase
 
         // Step 2: Create new payment method via API
         $newPaymentMethodResponse = $this->actingAs($user)
-            ->postJson(route('api.payment-methods.store'), [
+            ->postJsonWithCsrf(route('api.payment-methods.store'), [
                 'name' => 'Entertainment Card',
             ]);
 
@@ -282,7 +282,7 @@ class InlinePaymentMethodCreationIntegrationTest extends TestCase
         ];
 
         $createResponse = $this->actingAs($user)
-            ->post(route('subscriptions.store'), $subscriptionData);
+            ->postWithCsrf(route('subscriptions.store'), $subscriptionData);
 
         $createResponse->assertRedirect();
 

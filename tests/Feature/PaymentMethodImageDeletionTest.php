@@ -38,7 +38,7 @@ class PaymentMethodImageDeletionTest extends TestCase
         $file = UploadedFile::fake()->image('payment-method.jpg');
 
         $response = $this->actingAs($this->user)
-            ->put("/payment-methods/{$this->paymentMethod->id}", [
+            ->putWithCsrf("/payment-methods/{$this->paymentMethod->id}", [
                 'name' => $this->paymentMethod->name,
                 'description' => $this->paymentMethod->description,
                 'is_active' => $this->paymentMethod->is_active,
@@ -54,7 +54,7 @@ class PaymentMethodImageDeletionTest extends TestCase
 
         // Now test image deletion via remove_image flag
         $response = $this->actingAs($this->user)
-            ->put("/payment-methods/{$this->paymentMethod->id}", [
+            ->putWithCsrf("/payment-methods/{$this->paymentMethod->id}", [
                 'name' => $this->paymentMethod->name,
                 'description' => $this->paymentMethod->description,
                 'is_active' => $this->paymentMethod->is_active,
@@ -79,7 +79,7 @@ class PaymentMethodImageDeletionTest extends TestCase
         $file = UploadedFile::fake()->image('test-image.png');
 
         $this->actingAs($this->user)
-            ->put("/payment-methods/{$this->paymentMethod->id}", [
+            ->putWithCsrf("/payment-methods/{$this->paymentMethod->id}", [
                 'name' => $this->paymentMethod->name,
                 'description' => $this->paymentMethod->description,
                 'is_active' => $this->paymentMethod->is_active,
@@ -93,7 +93,7 @@ class PaymentMethodImageDeletionTest extends TestCase
 
         // Delete the image
         $response = $this->actingAs($this->user)
-            ->put("/payment-methods/{$this->paymentMethod->id}", [
+            ->putWithCsrf("/payment-methods/{$this->paymentMethod->id}", [
                 'name' => $originalName,
                 'description' => $originalDescription,
                 'is_active' => $originalIsActive,
@@ -116,7 +116,7 @@ class PaymentMethodImageDeletionTest extends TestCase
     {
         // Test deleting image when no image exists (should not cause errors)
         $response = $this->actingAs($this->user)
-            ->put("/payment-methods/{$this->paymentMethod->id}", [
+            ->putWithCsrf("/payment-methods/{$this->paymentMethod->id}", [
                 'name' => $this->paymentMethod->name,
                 'description' => $this->paymentMethod->description,
                 'is_active' => $this->paymentMethod->is_active,
@@ -133,7 +133,7 @@ class PaymentMethodImageDeletionTest extends TestCase
     public function test_payment_method_image_deletion_requires_authentication()
     {
         // Test that unauthenticated users cannot delete images
-        $response = $this->put("/payment-methods/{$this->paymentMethod->id}", [
+        $response = $this->putWithCsrf("/payment-methods/{$this->paymentMethod->id}", [
             'name' => $this->paymentMethod->name,
             'description' => $this->paymentMethod->description,
             'is_active' => $this->paymentMethod->is_active,
@@ -156,7 +156,7 @@ class PaymentMethodImageDeletionTest extends TestCase
         // Upload an image to the other user's payment method
         $file = UploadedFile::fake()->image('other-user-image.jpg');
         $response = $this->actingAs($otherUser)
-            ->put("/payment-methods/{$otherPaymentMethod->id}", [
+            ->putWithCsrf("/payment-methods/{$otherPaymentMethod->id}", [
                 'name' => $otherPaymentMethod->name,
                 'description' => $otherPaymentMethod->description,
                 'is_active' => $otherPaymentMethod->is_active ? 1 : 0,
@@ -169,7 +169,7 @@ class PaymentMethodImageDeletionTest extends TestCase
 
         // Try to delete the image as a different user
         $response = $this->actingAs($this->user)
-            ->put("/payment-methods/{$otherPaymentMethod->id}", [
+            ->putWithCsrf("/payment-methods/{$otherPaymentMethod->id}", [
                 'name' => $otherPaymentMethod->name,
                 'description' => $otherPaymentMethod->description,
                 'is_active' => $otherPaymentMethod->is_active,
@@ -190,7 +190,7 @@ class PaymentMethodImageDeletionTest extends TestCase
         // Upload initial image
         $initialFile = UploadedFile::fake()->image('initial-image.jpg');
         $this->actingAs($this->user)
-            ->put("/payment-methods/{$this->paymentMethod->id}", [
+            ->putWithCsrf("/payment-methods/{$this->paymentMethod->id}", [
                 'name' => $this->paymentMethod->name,
                 'description' => $this->paymentMethod->description,
                 'is_active' => $this->paymentMethod->is_active,
@@ -204,7 +204,7 @@ class PaymentMethodImageDeletionTest extends TestCase
         // Upload new image with remove_image flag (new image should take precedence)
         $newFile = UploadedFile::fake()->image('new-image.png');
         $response = $this->actingAs($this->user)
-            ->put("/payment-methods/{$this->paymentMethod->id}", [
+            ->putWithCsrf("/payment-methods/{$this->paymentMethod->id}", [
                 'name' => $this->paymentMethod->name,
                 'description' => $this->paymentMethod->description,
                 'is_active' => $this->paymentMethod->is_active,

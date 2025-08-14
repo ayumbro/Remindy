@@ -16,7 +16,7 @@ class PaymentMethodCreationApiTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)
-            ->postJson(route('api.payment-methods.store'), [
+            ->postJsonWithCsrf(route('api.payment-methods.store'), [
                 'name' => 'New Test Payment Method',
             ]);
 
@@ -57,7 +57,7 @@ class PaymentMethodCreationApiTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)
-            ->postJson(route('api.payment-methods.store'), [
+            ->postJsonWithCsrf(route('api.payment-methods.store'), [
                 'name' => 'Existing Payment Method',
             ]);
 
@@ -70,7 +70,7 @@ class PaymentMethodCreationApiTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)
-            ->postJson(route('api.payment-methods.store'), []);
+            ->postJsonWithCsrf(route('api.payment-methods.store'), []);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['name']);
@@ -81,7 +81,7 @@ class PaymentMethodCreationApiTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)
-            ->postJson(route('api.payment-methods.store'), [
+            ->postJsonWithCsrf(route('api.payment-methods.store'), [
                 'name' => str_repeat('a', 256), // Too long
             ]);
 
@@ -94,7 +94,7 @@ class PaymentMethodCreationApiTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)
-            ->postJson(route('api.payment-methods.store'), [
+            ->postJsonWithCsrf(route('api.payment-methods.store'), [
                 'name' => '  Trimmed Payment Method  ',
             ]);
 
@@ -109,7 +109,7 @@ class PaymentMethodCreationApiTest extends TestCase
 
     public function test_api_requires_authentication(): void
     {
-        $response = $this->postJson(route('api.payment-methods.store'), [
+        $response = $this->postJsonWithCsrf(route('api.payment-methods.store'), [
             'name' => 'Test Payment Method',
         ]);
 
@@ -129,7 +129,7 @@ class PaymentMethodCreationApiTest extends TestCase
 
         // User 2 should be able to create a payment method with the same name
         $response = $this->actingAs($user2)
-            ->postJson(route('api.payment-methods.store'), [
+            ->postJsonWithCsrf(route('api.payment-methods.store'), [
                 'name' => 'Shared Name',
             ]);
 
@@ -144,7 +144,7 @@ class PaymentMethodCreationApiTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)
-            ->postJson(route('api.payment-methods.store'), [
+            ->postJsonWithCsrf(route('api.payment-methods.store'), [
                 'name' => 'Test Payment Method',
             ]);
 
@@ -170,7 +170,7 @@ class PaymentMethodCreationApiTest extends TestCase
 
         // Try to create with different case
         $response = $this->actingAs($user)
-            ->postJson(route('api.payment-methods.store'), [
+            ->postJsonWithCsrf(route('api.payment-methods.store'), [
                 'name' => 'credit card',
             ]);
 
@@ -193,7 +193,7 @@ class PaymentMethodCreationApiTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)
-            ->postJson(route('api.payment-methods.store'), [
+            ->postJsonWithCsrf(route('api.payment-methods.store'), [
                 'name' => 'Structured Payment Method',
             ]);
 

@@ -28,7 +28,7 @@ class SubscriptionEndDateValidationTest extends TestCase
     public function it_allows_creating_subscription_with_valid_end_date()
     {
         $response = $this->actingAs($this->user)
-            ->post('/subscriptions', [
+            ->postWithCsrf('/subscriptions', [
                 'name' => 'Test Subscription',
                 'price' => 9.99,
                 'currency_id' => $this->currency->id,
@@ -50,7 +50,7 @@ class SubscriptionEndDateValidationTest extends TestCase
     public function it_allows_creating_subscription_with_same_day_end_date()
     {
         $response = $this->actingAs($this->user)
-            ->post('/subscriptions', [
+            ->postWithCsrf('/subscriptions', [
                 'name' => 'Test Subscription',
                 'price' => 9.99,
                 'currency_id' => $this->currency->id,
@@ -72,7 +72,7 @@ class SubscriptionEndDateValidationTest extends TestCase
     public function it_rejects_creating_subscription_with_end_date_before_start_date()
     {
         $response = $this->actingAs($this->user)
-            ->post('/subscriptions', [
+            ->postWithCsrf('/subscriptions', [
                 'name' => 'Test Subscription',
                 'price' => 9.99,
                 'currency_id' => $this->currency->id,
@@ -93,7 +93,7 @@ class SubscriptionEndDateValidationTest extends TestCase
     public function it_allows_creating_subscription_with_null_end_date()
     {
         $response = $this->actingAs($this->user)
-            ->post('/subscriptions', [
+            ->postWithCsrf('/subscriptions', [
                 'name' => 'Test Subscription',
                 'price' => 9.99,
                 'currency_id' => $this->currency->id,
@@ -121,7 +121,7 @@ class SubscriptionEndDateValidationTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user)
-            ->put("/subscriptions/{$subscription->id}", [
+            ->putWithCsrf("/subscriptions/{$subscription->id}", [
                 'name' => 'Updated Subscription',
                 'price' => 19.99,
                 'currency_id' => $this->currency->id,
@@ -145,7 +145,7 @@ class SubscriptionEndDateValidationTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user)
-            ->put("/subscriptions/{$subscription->id}", [
+            ->putWithCsrf("/subscriptions/{$subscription->id}", [
                 'name' => 'Updated Subscription',
                 'price' => 19.99,
                 'currency_id' => $this->currency->id,
@@ -165,7 +165,7 @@ class SubscriptionEndDateValidationTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user)
-            ->put("/subscriptions/{$subscription->id}", [
+            ->putWithCsrf("/subscriptions/{$subscription->id}", [
                 'name' => 'Updated Subscription',
                 'price' => 19.99,
                 'currency_id' => $this->currency->id,

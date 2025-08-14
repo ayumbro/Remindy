@@ -29,12 +29,12 @@ class LocalizationBugTest extends TestCase
         $this->assertEquals('en', App::getLocale(), 'First login should use user preference (en)');
 
         // Logout
-        $this->post('/logout');
+        $this->postWithCsrf('/logout');
         $this->assertGuest();
 
         // Login again with same browser headers
         $loginResponse = $this->withHeaders($browserHeaders)
-            ->post('/login', [
+            ->postWithCsrf('/login', [
                 'email' => $user->email,
                 'password' => 'password', // Default password from factory
             ]);

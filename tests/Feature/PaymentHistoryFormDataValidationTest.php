@@ -62,7 +62,7 @@ class PaymentHistoryFormDataValidationTest extends TestCase
 
         // Simulate editing payment history with only image upload (no field changes)
         $response = $this->actingAs($this->user)
-            ->post("/payment-histories/{$this->paymentHistory->id}", [
+            ->postWithCsrf("/payment-histories/{$this->paymentHistory->id}", [
                 '_method' => 'PUT',
                 'amount' => '9.99', // Same as existing
                 'payment_date' => '2024-01-15', // Same as existing
@@ -99,7 +99,7 @@ class PaymentHistoryFormDataValidationTest extends TestCase
         // Test the exact scenario from the issue: edit existing payment with valid data,
         // upload image without changing any other fields
         $response = $this->actingAs($this->user)
-            ->post("/payment-histories/{$this->paymentHistory->id}", [
+            ->postWithCsrf("/payment-histories/{$this->paymentHistory->id}", [
                 '_method' => 'PUT',
                 // Send the exact same values that are already in the database
                 'amount' => $this->paymentHistory->amount,
@@ -137,7 +137,7 @@ class PaymentHistoryFormDataValidationTest extends TestCase
 
         // Test that POST request with _method=PUT is accepted (no Method Not Allowed error)
         $response = $this->actingAs($this->user)
-            ->post("/payment-histories/{$this->paymentHistory->id}", [
+            ->postWithCsrf("/payment-histories/{$this->paymentHistory->id}", [
                 '_method' => 'PUT',
                 'amount' => '15.99',
                 'payment_date' => '2024-01-20',
@@ -190,7 +190,7 @@ class PaymentHistoryFormDataValidationTest extends TestCase
 
         // Test removing one attachment through the edit dialog
         $response = $this->actingAs($this->user)
-            ->post("/payment-histories/{$this->paymentHistory->id}", [
+            ->postWithCsrf("/payment-histories/{$this->paymentHistory->id}", [
                 '_method' => 'PUT',
                 'amount' => $this->paymentHistory->amount,
                 'payment_date' => $this->paymentHistory->payment_date->format('Y-m-d'),
@@ -236,7 +236,7 @@ class PaymentHistoryFormDataValidationTest extends TestCase
 
         // Test removing existing attachment AND uploading new file
         $response = $this->actingAs($this->user)
-            ->post("/payment-histories/{$this->paymentHistory->id}", [
+            ->postWithCsrf("/payment-histories/{$this->paymentHistory->id}", [
                 '_method' => 'PUT',
                 'amount' => $this->paymentHistory->amount,
                 'payment_date' => $this->paymentHistory->payment_date->format('Y-m-d'),
@@ -282,7 +282,7 @@ class PaymentHistoryFormDataValidationTest extends TestCase
 
         // Test removing attachment
         $response = $this->actingAs($this->user)
-            ->post("/payment-histories/{$this->paymentHistory->id}", [
+            ->postWithCsrf("/payment-histories/{$this->paymentHistory->id}", [
                 '_method' => 'PUT',
                 'amount' => $this->paymentHistory->amount,
                 'payment_date' => $this->paymentHistory->payment_date->format('Y-m-d'),
@@ -319,7 +319,7 @@ class PaymentHistoryFormDataValidationTest extends TestCase
 
         // Test removing attachment WITHOUT uploading new files (should use regular form submission)
         $response = $this->actingAs($this->user)
-            ->put("/payment-histories/{$this->paymentHistory->id}", [
+            ->putWithCsrf("/payment-histories/{$this->paymentHistory->id}", [
                 'amount' => $this->paymentHistory->amount,
                 'payment_date' => $this->paymentHistory->payment_date->format('Y-m-d'),
                 'payment_method_id' => $this->paymentHistory->payment_method_id,
@@ -365,7 +365,7 @@ class PaymentHistoryFormDataValidationTest extends TestCase
 
         // This simulates what the frontend should send when removing attachments without new files
         $response = $this->actingAs($this->user)
-            ->put("/payment-histories/{$this->paymentHistory->id}", [
+            ->putWithCsrf("/payment-histories/{$this->paymentHistory->id}", [
                 'amount' => $this->paymentHistory->amount,
                 'payment_date' => $this->paymentHistory->payment_date->format('Y-m-d'),
                 'payment_method_id' => $this->paymentHistory->payment_method_id,
@@ -404,7 +404,7 @@ class PaymentHistoryFormDataValidationTest extends TestCase
 
         // Test individual attachment deletion (this is what the frontend actually uses)
         $response = $this->actingAs($this->user)
-            ->delete("/payment-attachments/{$attachment->id}");
+            ->deleteWithCsrf("/payment-attachments/{$attachment->id}");
 
         // Should succeed
         $response->assertRedirect();
@@ -431,7 +431,7 @@ class PaymentHistoryFormDataValidationTest extends TestCase
 
         // Simulate editing payment history with zero amount and image upload
         $response = $this->actingAs($this->user)
-            ->post("/payment-histories/{$this->paymentHistory->id}", [
+            ->postWithCsrf("/payment-histories/{$this->paymentHistory->id}", [
                 '_method' => 'PUT',
                 'amount' => '0', // Zero amount (falsy value)
                 'payment_date' => '2024-01-15',
@@ -454,7 +454,7 @@ class PaymentHistoryFormDataValidationTest extends TestCase
 
         // Simulate editing payment history with valid amount and image upload
         $response = $this->actingAs($this->user)
-            ->post("/payment-histories/{$this->paymentHistory->id}", [
+            ->postWithCsrf("/payment-histories/{$this->paymentHistory->id}", [
                 '_method' => 'PUT',
                 'amount' => '15.50', // Valid amount
                 'payment_date' => '2024-01-20', // New date

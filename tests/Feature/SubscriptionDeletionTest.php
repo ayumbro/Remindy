@@ -42,7 +42,7 @@ class SubscriptionDeletionTest extends TestCase
 
         // Delete subscription
         $response = $this->actingAs($this->user)
-            ->delete("/subscriptions/{$subscription->id}");
+            ->deleteWithCsrf("/subscriptions/{$subscription->id}");
 
         // Should redirect to subscriptions index with success message
         $response->assertRedirect('/subscriptions');
@@ -77,7 +77,7 @@ class SubscriptionDeletionTest extends TestCase
 
         // Attempt to delete subscription
         $response = $this->actingAs($this->user)
-            ->delete("/subscriptions/{$subscription->id}");
+            ->deleteWithCsrf("/subscriptions/{$subscription->id}");
 
         // Should redirect back with error
         $response->assertRedirect();
@@ -107,7 +107,7 @@ class SubscriptionDeletionTest extends TestCase
 
         // Attempt to delete subscription
         $response = $this->actingAs($this->user)
-            ->delete("/subscriptions/{$subscription->id}");
+            ->deleteWithCsrf("/subscriptions/{$subscription->id}");
 
         // Should redirect back with error mentioning multiple records
         $response->assertRedirect();
@@ -132,7 +132,7 @@ class SubscriptionDeletionTest extends TestCase
 
         // Attempt to delete another user's subscription
         $response = $this->actingAs($this->user)
-            ->delete("/subscriptions/{$subscription->id}");
+            ->deleteWithCsrf("/subscriptions/{$subscription->id}");
 
         // Should return 403 Forbidden
         $response->assertStatus(403);
@@ -150,7 +150,7 @@ class SubscriptionDeletionTest extends TestCase
         ]);
 
         // Attempt to delete without authentication
-        $response = $this->delete("/subscriptions/{$subscription->id}");
+        $response = $this->deleteWithCsrf("/subscriptions/{$subscription->id}");
 
         // Should redirect to login
         $response->assertRedirect('/login');

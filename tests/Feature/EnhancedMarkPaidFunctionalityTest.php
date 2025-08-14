@@ -77,7 +77,7 @@ class EnhancedMarkPaidFunctionalityTest extends TestCase
         ];
 
         $response = $this->actingAs($this->user)
-            ->post("/subscriptions/{$subscription->id}/mark-paid", $paymentData);
+            ->postWithCsrf("/subscriptions/{$subscription->id}/mark-paid", $paymentData);
 
         $response->assertRedirect();
 
@@ -96,14 +96,14 @@ class EnhancedMarkPaidFunctionalityTest extends TestCase
 
         // Test missing amount
         $response = $this->actingAs($this->user)
-            ->post("/subscriptions/{$subscription->id}/mark-paid", [
+            ->postWithCsrf("/subscriptions/{$subscription->id}/mark-paid", [
                 'payment_date' => '2024-01-15',
             ]);
         $response->assertSessionHasErrors(['amount']);
 
         // Test invalid amount
         $response = $this->actingAs($this->user)
-            ->post("/subscriptions/{$subscription->id}/mark-paid", [
+            ->postWithCsrf("/subscriptions/{$subscription->id}/mark-paid", [
                 'amount' => '0',
                 'payment_date' => '2024-01-15',
                 'currency_id' => $this->currency->id,
@@ -112,7 +112,7 @@ class EnhancedMarkPaidFunctionalityTest extends TestCase
 
         // Test missing payment date
         $response = $this->actingAs($this->user)
-            ->post("/subscriptions/{$subscription->id}/mark-paid", [
+            ->postWithCsrf("/subscriptions/{$subscription->id}/mark-paid", [
                 'amount' => '9.99',
                 'currency_id' => $this->currency->id,
             ]);
@@ -120,7 +120,7 @@ class EnhancedMarkPaidFunctionalityTest extends TestCase
 
         // Test invalid payment method
         $response = $this->actingAs($this->user)
-            ->post("/subscriptions/{$subscription->id}/mark-paid", [
+            ->postWithCsrf("/subscriptions/{$subscription->id}/mark-paid", [
                 'amount' => '9.99',
                 'payment_date' => '2024-01-15',
                 'payment_method_id' => 99999,
@@ -152,7 +152,7 @@ class EnhancedMarkPaidFunctionalityTest extends TestCase
         ];
 
         $response = $this->actingAs($this->user)
-            ->put("/payment-histories/{$paymentHistory->id}", $updateData);
+            ->putWithCsrf("/payment-histories/{$paymentHistory->id}", $updateData);
 
         $response->assertRedirect();
 
@@ -178,14 +178,14 @@ class EnhancedMarkPaidFunctionalityTest extends TestCase
 
         // Test missing amount
         $response = $this->actingAs($this->user)
-            ->put("/payment-histories/{$paymentHistory->id}", [
+            ->putWithCsrf("/payment-histories/{$paymentHistory->id}", [
                 'payment_date' => '2024-01-15',
             ]);
         $response->assertSessionHasErrors(['amount']);
 
         // Test invalid amount
         $response = $this->actingAs($this->user)
-            ->put("/payment-histories/{$paymentHistory->id}", [
+            ->putWithCsrf("/payment-histories/{$paymentHistory->id}", [
                 'amount' => '0',
                 'payment_date' => '2024-01-15',
                 'currency_id' => $this->currency->id,
@@ -205,7 +205,7 @@ class EnhancedMarkPaidFunctionalityTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user)
-            ->put("/payment-histories/{$otherPaymentHistory->id}", [
+            ->putWithCsrf("/payment-histories/{$otherPaymentHistory->id}", [
                 'amount' => '9.99',
                 'payment_date' => '2024-01-15',
                 'currency_id' => $this->currency->id,
@@ -225,7 +225,7 @@ class EnhancedMarkPaidFunctionalityTest extends TestCase
             ->create(['name' => 'Other Payment Method']);
 
         $response = $this->actingAs($this->user)
-            ->post("/subscriptions/{$subscription->id}/mark-paid", [
+            ->postWithCsrf("/subscriptions/{$subscription->id}/mark-paid", [
                 'amount' => '9.99',
                 'payment_date' => '2024-01-15',
                 'payment_method_id' => $otherPaymentMethod->id,
@@ -250,7 +250,7 @@ class EnhancedMarkPaidFunctionalityTest extends TestCase
             ->create(['name' => 'Other Payment Method 2']);
 
         $response = $this->actingAs($this->user)
-            ->put("/payment-histories/{$paymentHistory->id}", [
+            ->putWithCsrf("/payment-histories/{$paymentHistory->id}", [
                 'amount' => '9.99',
                 'payment_date' => '2024-01-15',
                 'payment_method_id' => $otherPaymentMethod->id,
@@ -266,7 +266,7 @@ class EnhancedMarkPaidFunctionalityTest extends TestCase
         $longNotes = str_repeat('a', 1001); // 1001 characters
 
         $response = $this->actingAs($this->user)
-            ->post("/subscriptions/{$subscription->id}/mark-paid", [
+            ->postWithCsrf("/subscriptions/{$subscription->id}/mark-paid", [
                 'amount' => '9.99',
                 'payment_date' => '2024-01-15',
                 'currency_id' => $this->currency->id,
@@ -280,7 +280,7 @@ class EnhancedMarkPaidFunctionalityTest extends TestCase
     {
         $subscription = $this->createSubscription();
 
-        $response = $this->post("/subscriptions/{$subscription->id}/mark-paid", [
+        $response = $this->postWithCsrf("/subscriptions/{$subscription->id}/mark-paid", [
             'amount' => '9.99',
             'payment_date' => '2024-01-15',
             'currency_id' => $this->currency->id,
@@ -297,7 +297,7 @@ class EnhancedMarkPaidFunctionalityTest extends TestCase
             'subscription_id' => $subscription->id,
         ]);
 
-        $response = $this->put("/payment-histories/{$paymentHistory->id}", [
+        $response = $this->putWithCsrf("/payment-histories/{$paymentHistory->id}", [
             'amount' => '9.99',
             'payment_date' => '2024-01-15',
             'currency_id' => $this->currency->id,
@@ -311,7 +311,7 @@ class EnhancedMarkPaidFunctionalityTest extends TestCase
         $subscription = $this->createSubscription();
 
         $response = $this->actingAs($this->user)
-            ->post("/subscriptions/{$subscription->id}/mark-paid", [
+            ->postWithCsrf("/subscriptions/{$subscription->id}/mark-paid", [
                 'amount' => '9.99',
                 'payment_date' => '2024-01-15',
                 'currency_id' => $this->currency->id,
@@ -330,7 +330,7 @@ class EnhancedMarkPaidFunctionalityTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user)
-            ->put("/payment-histories/{$paymentHistory->id}", [
+            ->putWithCsrf("/payment-histories/{$paymentHistory->id}", [
                 'amount' => '19.99',
                 'payment_date' => '2024-01-15',
                 'currency_id' => $this->currency->id,
