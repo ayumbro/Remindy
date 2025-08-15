@@ -132,70 +132,77 @@ export default function SubscriptionsIndex({ subscriptions = { data: [], links: 
     return (
         <AppLayout breadcrumbs={breadcrumbs(t)}>
             <Head title={t('app.nav.subscriptions')} />
-            <div className="flex h-full flex-1 flex-col gap-6 p-6">
+            <div className="flex h-full flex-1 flex-col gap-4 p-4 sm:gap-6 sm:p-6">
                 {/* Header */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3">
-                        <CreditCard className="text-primary h-8 w-8" />
-                        <div>
-                            <h1 className="text-3xl font-bold">{t('app.nav.subscriptions')}</h1>
-                            <p className="text-muted-foreground">{t('subscriptions.description')}</p>
+                        <CreditCard className="text-primary h-6 w-6 sm:h-8 sm:w-8" />
+                        <div className="min-w-0 flex-1">
+                            <h1 className="text-2xl font-bold sm:text-3xl">{t('app.nav.subscriptions')}</h1>
+                            <p className="text-muted-foreground text-sm sm:text-base">{t('subscriptions.description')}</p>
                         </div>
                     </div>
-                    <Button asChild className="gap-2">
+                    <Button asChild className="gap-2 self-start sm:self-auto">
                         <Link href="/subscriptions/create">
                             <Plus className="h-4 w-4" />
-                            {t('subscriptions.add_subscription')}
+                            <span className="hidden sm:inline">{t('subscriptions.add_subscription')}</span>
+                            <span className="sm:hidden">Add</span>
                         </Link>
                     </Button>
                 </div>
 
                 {/* Filters */}
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <Tabs defaultValue={filters.status || 'all'} className="flex-1">
-                        <TabsList className="grid w-full grid-cols-5">
-                        <TabsTrigger value="all" asChild>
-                            <Link href="/subscriptions?status=all" className="flex items-center gap-2">
-                                <Filter className="h-4 w-4" />
-                                {t('subscriptions.filters.all')}
+                <div className="space-y-4">
+                    {/* Status Tabs */}
+                    <Tabs defaultValue={filters.status || 'all'} className="w-full">
+                        <TabsList className="flex h-auto w-full flex-wrap items-center justify-start gap-1 rounded-lg bg-muted p-1 text-muted-foreground sm:grid sm:h-9 sm:grid-cols-5 sm:gap-0">
+                        <TabsTrigger value="active" asChild className="text-xs sm:text-sm">
+                            <Link href="/subscriptions?status=active" className="flex items-center gap-1 sm:gap-2">
+                                <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                                <span className="hidden sm:inline">{t('subscriptions.status.active')}</span>
+                                <span className="sm:hidden">Active</span>
                             </Link>
                         </TabsTrigger>
-                        <TabsTrigger value="active" asChild>
-                            <Link href="/subscriptions?status=active" className="flex items-center gap-2">
-                                <CheckCircle className="h-4 w-4" />
-                                {t('subscriptions.status.active')}
+                        <TabsTrigger value="upcoming" asChild className="text-xs sm:text-sm">
+                            <Link href="/subscriptions?status=upcoming" className="flex items-center gap-1 sm:gap-2">
+                                <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+                                <span className="hidden sm:inline">{t('subscriptions.filters.upcoming')}</span>
+                                <span className="sm:hidden">Soon</span>
                             </Link>
                         </TabsTrigger>
-                        <TabsTrigger value="upcoming" asChild>
-                            <Link href="/subscriptions?status=upcoming" className="flex items-center gap-2">
-                                <Clock className="h-4 w-4" />
-                                {t('subscriptions.filters.upcoming')}
+                        <TabsTrigger value="overdue" asChild className="text-xs sm:text-sm">
+                            <Link href="/subscriptions?status=overdue" className="flex items-center gap-1 sm:gap-2">
+                                <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4" />
+                                <span className="hidden sm:inline">{t('subscriptions.status.overdue')}</span>
+                                <span className="sm:hidden">Late</span>
                             </Link>
                         </TabsTrigger>
-                        <TabsTrigger value="overdue" asChild>
-                            <Link href="/subscriptions?status=overdue" className="flex items-center gap-2">
-                                <AlertTriangle className="h-4 w-4" />
-                                {t('subscriptions.status.overdue')}
+                        <TabsTrigger value="ended" asChild className="text-xs sm:text-sm">
+                            <Link href="/subscriptions?status=ended" className="flex items-center gap-1 sm:gap-2">
+                                <XCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                                <span className="hidden sm:inline">{t('subscriptions.status.ended')}</span>
+                                <span className="sm:hidden">Ended</span>
                             </Link>
                         </TabsTrigger>
-                        <TabsTrigger value="ended" asChild>
-                            <Link href="/subscriptions?status=ended" className="flex items-center gap-2">
-                                <XCircle className="h-4 w-4" />
-                                {t('subscriptions.status.ended')}
+                        <TabsTrigger value="all" asChild className="text-xs sm:text-sm">
+                            <Link href="/subscriptions?status=all" className="flex items-center gap-1 sm:gap-2">
+                                <Filter className="h-3 w-3 sm:h-4 sm:w-4" />
+                                <span className="hidden sm:inline">{t('subscriptions.filters.all')}</span>
+                                <span className="sm:hidden">All</span>
                             </Link>
                         </TabsTrigger>
                         </TabsList>
                     </Tabs>
-                    
+
                     {/* Category Filter */}
                     {categories.length > 0 && (
                         <div className="flex items-center gap-2">
                             <Filter className="h-4 w-4 text-muted-foreground" />
-                            <Select 
+                            <Select
                                 value={selectedCategory}
                                 onValueChange={handleCategoryChange}
                             >
-                                <SelectTrigger className="w-[200px]">
+                                <SelectTrigger className="w-full min-w-0 sm:w-[200px]">
                                     <SelectValue placeholder="Filter by category" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -204,12 +211,12 @@ export default function SubscriptionsIndex({ subscriptions = { data: [], links: 
                                         <SelectItem key={category.id} value={category.id.toString()}>
                                             <div className="flex items-center gap-2">
                                                 {category.display_color && (
-                                                    <div 
-                                                        className="h-3 w-3 rounded-full" 
+                                                    <div
+                                                        className="h-3 w-3 rounded-full"
                                                         style={{ backgroundColor: category.display_color }}
                                                     />
                                                 )}
-                                                {category.name}
+                                                <span className="truncate">{category.name}</span>
                                             </div>
                                         </SelectItem>
                                     ))}
@@ -222,61 +229,63 @@ export default function SubscriptionsIndex({ subscriptions = { data: [], links: 
                 {/* Subscriptions List */}
                 {(subscriptions.data || []).length === 0 ? (
                     <Card>
-                        <CardContent className="flex flex-col items-center justify-center py-12">
-                            <CreditCard className="text-muted-foreground mb-4 h-12 w-12" />
-                            <h3 className="mb-2 text-lg font-semibold">{t('subscriptions.no_subscriptions')}</h3>
-                            <p className="text-muted-foreground mb-4">{t('subscriptions.get_started')}</p>
+                        <CardContent className="flex flex-col items-center justify-center py-8 sm:py-12">
+                            <CreditCard className="text-muted-foreground mb-4 h-8 w-8 sm:h-12 sm:w-12" />
+                            <h3 className="mb-2 text-base font-semibold sm:text-lg">{t('subscriptions.no_subscriptions')}</h3>
+                            <p className="text-muted-foreground mb-4 text-center text-sm sm:text-base">{t('subscriptions.get_started')}</p>
                             <Button asChild className="gap-2">
                                 <Link href="/subscriptions/create">
                                     <Plus className="h-4 w-4" />
-                                    {t('subscriptions.add_first_subscription')}
+                                    <span className="hidden sm:inline">{t('subscriptions.add_first_subscription')}</span>
+                                    <span className="sm:hidden">Add Subscription</span>
                                 </Link>
                             </Button>
                         </CardContent>
                     </Card>
                 ) : (
                     <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <CreditCard className="h-5 w-5" />
-                                {t('app.nav.subscriptions')} ({(subscriptions.data || []).length})
+                        <CardHeader className="p-4 sm:p-6">
+                            <CardTitle className="flex items-center gap-2 text-lg sm:text-2xl">
+                                <CreditCard className="h-4 w-4 sm:h-5 sm:w-5" />
+                                <span className="hidden sm:inline">{t('app.nav.subscriptions')} ({(subscriptions.data || []).length})</span>
+                                <span className="sm:hidden">Subscriptions ({(subscriptions.data || []).length})</span>
                             </CardTitle>
-                            <CardDescription>{t('subscriptions.manage_track')}</CardDescription>
+                            <CardDescription className="text-xs sm:text-sm">{t('subscriptions.manage_track')}</CardDescription>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
                             {/* Desktop Table View */}
-                            <div className="table-responsive hidden md:block">
+                            <div className="table-responsive hidden lg:block">
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Name</TableHead>
-                                            <TableHead>Categories</TableHead>
-                                            <TableHead>Status</TableHead>
-                                            <TableHead>Price</TableHead>
-                                            <TableHead>Billing</TableHead>
-                                            <TableHead>Next/End Date</TableHead>
-                                            <TableHead>Payment Method</TableHead>
-                                            <TableHead className="text-right">Actions</TableHead>
+                                            <TableHead className="text-xs sm:text-sm">Name</TableHead>
+                                            <TableHead className="text-xs sm:text-sm">Categories</TableHead>
+                                            <TableHead className="text-xs sm:text-sm">Status</TableHead>
+                                            <TableHead className="text-xs sm:text-sm">Price</TableHead>
+                                            <TableHead className="text-xs sm:text-sm">Billing</TableHead>
+                                            <TableHead className="text-xs sm:text-sm">Next/End Date</TableHead>
+                                            <TableHead className="text-xs sm:text-sm">Payment Method</TableHead>
+                                            <TableHead className="text-right text-xs sm:text-sm">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {(subscriptions.data || []).map((subscription) => (
                                             <TableRow key={subscription.id} className="hover:bg-muted/50">
-                                                <TableCell>
+                                                <TableCell className="py-2">
                                                     <div>
-                                                        <div className="font-medium">{subscription.name}</div>
+                                                        <div className="font-medium text-sm">{subscription.name}</div>
                                                         {subscription.description && (
-                                                            <div className="text-muted-foreground text-sm">{subscription.description}</div>
+                                                            <div className="text-muted-foreground text-xs truncate max-w-[200px]">{subscription.description}</div>
                                                         )}
                                                     </div>
                                                 </TableCell>
-                                                <TableCell>
+                                                <TableCell className="py-2">
                                                     {subscription.categories && subscription.categories.length > 0 ? (
                                                         <div className="flex flex-wrap gap-1">
-                                                            {subscription.categories.slice(0, 2).map((category) => (
-                                                                <Badge 
-                                                                    key={category.id} 
-                                                                    variant="outline" 
+                                                            {subscription.categories.slice(0, 1).map((category) => (
+                                                                <Badge
+                                                                    key={category.id}
+                                                                    variant="outline"
                                                                     className="text-xs"
                                                                     style={{
                                                                         borderColor: category.display_color,
@@ -286,30 +295,30 @@ export default function SubscriptionsIndex({ subscriptions = { data: [], links: 
                                                                     {category.name}
                                                                 </Badge>
                                                             ))}
-                                                            {subscription.categories.length > 2 && (
+                                                            {subscription.categories.length > 1 && (
                                                                 <Badge variant="outline" className="text-xs">
-                                                                    +{subscription.categories.length - 2}
+                                                                    +{subscription.categories.length - 1}
                                                                 </Badge>
                                                             )}
                                                         </div>
                                                     ) : (
-                                                        <span className="text-muted-foreground text-sm">—</span>
+                                                        <span className="text-muted-foreground text-xs">—</span>
                                                     )}
                                                 </TableCell>
-                                                <TableCell>
-                                                    <Badge variant={getStatusColor(subscription)}>{getStatusText(subscription)}</Badge>
+                                                <TableCell className="py-2">
+                                                    <Badge variant={getStatusColor(subscription)} className="text-xs">{getStatusText(subscription)}</Badge>
                                                 </TableCell>
-                                                <TableCell>
-                                                    <div className="font-medium">{formatCurrency(subscription.price, subscription.currency)}</div>
+                                                <TableCell className="py-2">
+                                                    <div className="font-medium text-sm">{formatCurrency(subscription.price, subscription.currency)}</div>
                                                 </TableCell>
-                                                <TableCell>
-                                                    <div className="text-sm">
+                                                <TableCell className="py-2">
+                                                    <div className="text-xs">
                                                         {getBillingCycleText(subscription.billing_cycle, subscription.billing_interval)}
                                                     </div>
                                                 </TableCell>
-                                                <TableCell>
+                                                <TableCell className="py-2">
                                                     {subscription.computed_status === 'ended' ? (
-                                                        <div className="text-sm">
+                                                        <div className="text-xs">
                                                             <div>Started: {formatDate(subscription.start_date, userDateFormat)}</div>
                                                             {subscription.end_date && (
                                                                 <div className="text-muted-foreground">
@@ -319,7 +328,7 @@ export default function SubscriptionsIndex({ subscriptions = { data: [], links: 
                                                         </div>
                                                     ) : (
                                                         subscription.next_billing_date && (
-                                                            <div className="text-sm">
+                                                            <div className="text-xs">
                                                                 <div className="flex items-center gap-1">
                                                                     <Calendar className="h-3 w-3" />
                                                                     {formatDate(subscription.next_billing_date, userDateFormat)}
@@ -328,23 +337,23 @@ export default function SubscriptionsIndex({ subscriptions = { data: [], links: 
                                                         )
                                                     )}
                                                 </TableCell>
-                                                <TableCell>
+                                                <TableCell className="py-2">
                                                     {subscription.payment_method ? (
-                                                        <div className="text-sm">{subscription.payment_method.name}</div>
+                                                        <div className="text-xs truncate max-w-[120px]">{subscription.payment_method.name}</div>
                                                     ) : (
-                                                        <div className="text-muted-foreground text-sm">None</div>
+                                                        <div className="text-muted-foreground text-xs">None</div>
                                                     )}
                                                 </TableCell>
-                                                <TableCell className="text-right">
-                                                    <div className="flex items-center justify-end gap-2">
+                                                <TableCell className="text-right py-2">
+                                                    <div className="flex items-center justify-end gap-1">
                                                         <Button variant="ghost" size="sm" asChild>
                                                             <Link href={`/subscriptions/${subscription.id}`}>
-                                                                <Eye className="h-4 w-4" />
+                                                                <Eye className="h-3 w-3" />
                                                             </Link>
                                                         </Button>
                                                         <Button variant="ghost" size="sm" asChild>
                                                             <Link href={`/subscriptions/${subscription.id}/edit`}>
-                                                                <Edit className="h-4 w-4" />
+                                                                <Edit className="h-3 w-3" />
                                                             </Link>
                                                         </Button>
                                                     </div>
@@ -355,92 +364,109 @@ export default function SubscriptionsIndex({ subscriptions = { data: [], links: 
                                 </Table>
                             </div>
 
-                            {/* Mobile Card View */}
-                            <div className="space-y-4 md:hidden">
-                                {(subscriptions.data || []).map((subscription) => (
-                                    <div key={subscription.id} className="mobile-card theme-transition">
-                                        <div className="mobile-card-header">
-                                            <div className="flex items-center gap-3">
-                                                <div>
-                                                    <h3 className="font-medium">{subscription.name}</h3>
+                            {/* Tablet Compact View */}
+                            <div className="hidden md:block lg:hidden">
+                                <div className="space-y-2">
+                                    {(subscriptions.data || []).map((subscription) => (
+                                        <div key={subscription.id} className="rounded-lg border bg-card p-3 shadow-sm">
+                                            <div className="flex items-center justify-between gap-3">
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <h3 className="truncate text-sm font-medium">{subscription.name}</h3>
+                                                        <Badge variant={getStatusColor(subscription)} className="text-xs">{getStatusText(subscription)}</Badge>
+                                                    </div>
                                                     {subscription.description && (
-                                                        <p className="text-muted-foreground text-sm">{subscription.description}</p>
+                                                        <p className="text-muted-foreground mt-1 truncate text-xs">{subscription.description}</p>
                                                     )}
                                                 </div>
+                                                <div className="flex items-center gap-2 text-sm">
+                                                    <span className="font-medium">{formatCurrency(subscription.price, subscription.currency)}</span>
+                                                    <span className="text-muted-foreground text-xs">
+                                                        {getBillingCycleText(subscription.billing_cycle, subscription.billing_interval)}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    <Button variant="ghost" size="sm" asChild>
+                                                        <Link href={`/subscriptions/${subscription.id}`}>
+                                                            <Eye className="h-3 w-3" />
+                                                        </Link>
+                                                    </Button>
+                                                    <Button variant="ghost" size="sm" asChild>
+                                                        <Link href={`/subscriptions/${subscription.id}/edit`}>
+                                                            <Edit className="h-3 w-3" />
+                                                        </Link>
+                                                    </Button>
+                                                </div>
                                             </div>
-                                            <Badge variant={getStatusColor(subscription)}>{getStatusText(subscription)}</Badge>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Mobile Card View */}
+                            <div className="space-y-2 md:hidden">
+                                {(subscriptions.data || []).map((subscription) => (
+                                    <div key={subscription.id} className="rounded-lg border bg-card p-2 shadow-sm">
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div className="min-w-0 flex-1">
+                                                <h3 className="truncate text-sm font-medium">{subscription.name}</h3>
+                                                <div className="mt-1 flex items-center gap-2">
+                                                    <span className="font-medium text-xs">{formatCurrency(subscription.price, subscription.currency)}</span>
+                                                    <span className="text-muted-foreground text-xs">
+                                                        {getBillingCycleText(subscription.billing_cycle, subscription.billing_interval)}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <Badge variant={getStatusColor(subscription)} className="text-xs">{getStatusText(subscription)}</Badge>
                                         </div>
 
-                                        <div className="mobile-card-content">
-                                            <div className="flex justify-between">
-                                                <span className="text-muted-foreground">Price:</span>
-                                                <span className="font-medium">{formatCurrency(subscription.price, subscription.currency)}</span>
-                                            </div>
-
-                                            <div className="flex justify-between">
-                                                <span className="text-muted-foreground">Billing:</span>
-                                                <span>{getBillingCycleText(subscription.billing_cycle, subscription.billing_interval)}</span>
-                                            </div>
-
-                                            {subscription.computed_status === 'ended' ? (
-                                                <div className="space-y-1">
-                                                    <div className="flex justify-between">
-                                                        <span className="text-muted-foreground">Started:</span>
-                                                        <span>{formatDate(subscription.start_date, userDateFormat)}</span>
-                                                    </div>
-                                                    {subscription.end_date && (
-                                                        <div className="flex justify-between">
-                                                            <span className="text-muted-foreground">Ended:</span>
-                                                            <span>{formatDate(subscription.end_date, userDateFormat)}</span>
-                                                        </div>
-                                                    )}
+                                        <div className="mt-2 space-y-1 text-xs">
+                                            {subscription.next_billing_date && subscription.computed_status !== 'ended' && (
+                                                <div className="flex justify-between">
+                                                    <span className="text-muted-foreground">Next billing:</span>
+                                                    <span className="flex items-center gap-1">
+                                                        <Calendar className="h-3 w-3" />
+                                                        {formatDate(subscription.next_billing_date, userDateFormat)}
+                                                    </span>
                                                 </div>
-                                            ) : (
-                                                subscription.next_billing_date && (
-                                                    <div className="flex justify-between">
-                                                        <span className="text-muted-foreground">Next billing:</span>
-                                                        <span className="flex items-center gap-1">
-                                                            <Calendar className="h-3 w-3" />
-                                                            {formatDate(subscription.next_billing_date, userDateFormat)}
-                                                        </span>
-                                                    </div>
-                                                )
                                             )}
 
-                                            <div className="flex justify-between">
-                                                <span className="text-muted-foreground">Payment method:</span>
-                                                <span>{subscription.payment_method ? subscription.payment_method.name : 'None'}</span>
-                                            </div>
+                                            {subscription.payment_method && (
+                                                <div className="flex justify-between">
+                                                    <span className="text-muted-foreground">Payment:</span>
+                                                    <span className="truncate text-xs">{subscription.payment_method.name}</span>
+                                                </div>
+                                            )}
 
                                             {subscription.categories && subscription.categories.length > 0 && (
-                                                <div className="flex flex-wrap gap-1 pt-2">
-                                                    {subscription.categories.slice(0, 3).map((category) => (
+                                                <div className="flex flex-wrap gap-1 pt-1">
+                                                    {subscription.categories.slice(0, 2).map((category) => (
                                                         <Badge key={category.id} variant="outline" className="text-xs">
                                                             {category.name}
                                                         </Badge>
                                                     ))}
-                                                    {subscription.categories.length > 3 && (
+                                                    {subscription.categories.length > 2 && (
                                                         <Badge variant="outline" className="text-xs">
-                                                            +{subscription.categories.length - 3}
+                                                            +{subscription.categories.length - 2}
                                                         </Badge>
                                                     )}
                                                 </div>
                                             )}
                                         </div>
 
-                                        <div className="flex gap-2 pt-2">
-                                            <Button variant="outline" size="sm" asChild className="flex-1">
-                                                <Link href={`/subscriptions/${subscription.id}`} className="flex items-center justify-center gap-2">
-                                                    <Eye className="h-4 w-4" />
+                                        <div className="mt-2 flex gap-1">
+                                            <Button variant="ghost" size="sm" asChild className="flex-1 text-xs h-7">
+                                                <Link href={`/subscriptions/${subscription.id}`} className="flex items-center justify-center gap-1">
+                                                    <Eye className="h-3 w-3" />
                                                     View
                                                 </Link>
                                             </Button>
-                                            <Button variant="outline" size="sm" asChild className="flex-1">
+                                            <Button variant="ghost" size="sm" asChild className="flex-1 text-xs h-7">
                                                 <Link
                                                     href={`/subscriptions/${subscription.id}/edit`}
-                                                    className="flex items-center justify-center gap-2"
+                                                    className="flex items-center justify-center gap-1"
                                                 >
-                                                    <Edit className="h-4 w-4" />
+                                                    <Edit className="h-3 w-3" />
                                                     Edit
                                                 </Link>
                                             </Button>
@@ -454,9 +480,9 @@ export default function SubscriptionsIndex({ subscriptions = { data: [], links: 
 
                 {/* Pagination */}
                 {subscriptions.meta && subscriptions.meta.last_page > 1 && (
-                    <div className="flex justify-center gap-2">
+                    <div className="flex flex-wrap justify-center gap-1 sm:gap-2">
                         {(subscriptions.links || []).map((link: any, index: number) => (
-                            <Button key={index} variant={link.active ? 'default' : 'outline'} size="sm" asChild={!!link.url} disabled={!link.url}>
+                            <Button key={index} variant={link.active ? 'default' : 'outline'} size="sm" className="text-xs sm:text-sm" asChild={!!link.url} disabled={!link.url}>
                                 {link.url ? (
                                     <Link href={link.url} dangerouslySetInnerHTML={{ __html: link.label }} />
                                 ) : (
