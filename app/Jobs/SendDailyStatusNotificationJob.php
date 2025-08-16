@@ -42,7 +42,7 @@ class SendDailyStatusNotificationJob implements ShouldQueue
     {
         try {
             $user = User::find($this->userId);
-            
+
             if (!$user) {
                 Log::warning('Daily status notification job: User not found', [
                     'user_id' => $this->userId,
@@ -68,7 +68,7 @@ class SendDailyStatusNotificationJob implements ShouldQueue
             if ($this->sendDailyNotification($user)) {
                 // Update last sent timestamp
                 $user->update(['last_daily_notification_sent_at' => Carbon::now()]);
-                
+
                 Log::info('Daily status notification sent successfully', [
                     'user_id' => $user->id,
                     'email' => $user->email,

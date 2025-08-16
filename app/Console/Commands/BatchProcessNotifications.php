@@ -54,6 +54,12 @@ Examples:
             $this->line("[$currentTime] Mode: $mode");
         }
 
+        // Simple execution log
+        Log::info('Batch process executed', [
+            'timestamp' => now()->format('Y-m-d H:i:s'),
+            'mode' => $mode,
+        ]);
+
         $dailyJobsQueued = 0;
         $reminderJobsQueued = 0;
 
@@ -277,4 +283,6 @@ Examples:
             $this->error('✗ Some jobs may have failed during processing');
         }
     }
+
+
 }

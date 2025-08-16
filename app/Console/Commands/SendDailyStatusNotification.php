@@ -136,7 +136,7 @@ class SendDailyStatusNotification extends Command
                 Log::info('No users found for daily status notifications');
                 return self::SUCCESS;
             }
-            
+
             $this->info(sprintf('Found %d user(s) scheduled for daily status notifications', $users->count()));
 
             $successCount = 0;
@@ -183,13 +183,13 @@ class SendDailyStatusNotification extends Command
                     ]);
                 }
             }
-            
+
             $this->info("Daily status notifications processed:");
             $this->info("  Successfully sent: $successCount");
             if ($failureCount > 0) {
                 $this->warn("  Failed to send: $failureCount");
             }
-            
+
             Log::info('Daily status notifications processed', [
                 'testing_mode' => $testingMode,
                 'current_time_utc' => $currentTime,
