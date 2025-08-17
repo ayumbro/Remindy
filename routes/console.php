@@ -17,8 +17,8 @@ Schedule::command('reminders:send-scheduled')
     ->appendOutputTo(storage_path('logs/scheduled-reminders.log'));
 
 // BATCH PROCESSING APPROACH - Queue all notifications and process them in batch
-// Runs every minute to queue notifications and process them immediately
-// Duplicate window controlled by NOTIFICATION_DUPLICATE_WINDOW environment variable (default: 23 hours)
+// Runs every minute with 3-minute time window tolerance for user notification times
+// Duplicate prevention: NOTIFICATION_DUPLICATE_WINDOW=0 (testing) or 23 (production)
 Schedule::command('notifications:batch-process')
     ->everyMinute()
     ->withoutOverlapping()
@@ -26,10 +26,7 @@ Schedule::command('notifications:batch-process')
     ->appendOutputTo(storage_path('logs/batch-notifications.log'));
 
 // LEGACY COMMANDS (commented out - replaced by batch processing)
-// Daily Status Notifications - Sends daily confirmation emails synchronously (no queue)
-// Runs every minute to check for users with daily notifications enabled at exact time
-// TEMPORARY: Using --testing flag for hourly notifications during development
-// Schedule::command('reminders:send-daily-status --testing')
+// Schedule::command('reminders:send-daily-status')
 //     ->everyMinute()
 //     ->withoutOverlapping()
 //     ->runInBackground()

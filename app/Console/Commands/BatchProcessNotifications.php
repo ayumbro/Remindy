@@ -26,7 +26,10 @@ class BatchProcessNotifications extends Command
      */
     protected $description = 'Queue all pending notifications and process them in batch
 
-Duplicate prevention is controlled by NOTIFICATION_DUPLICATE_WINDOW environment variable (default: 23 hours).
+Optimized for cron execution every minute with 3-minute time window tolerance.
+Duplicate prevention controlled by NOTIFICATION_DUPLICATE_WINDOW environment variable:
+- NOTIFICATION_DUPLICATE_WINDOW=0: Allow multiple notifications per day (testing)
+- NOTIFICATION_DUPLICATE_WINDOW=23: Prevent duplicates within 23 hours (production)
 
 Examples:
   php artisan notifications:batch-process                    # Normal processing
@@ -42,22 +45,17 @@ Examples:
         $dailyOnly = $this->option('daily-only');
         $remindersOnly = $this->option('reminders-only');
 
-        // Get duplicate window from environment variable
-        $duplicateWindowHours = (int) env('NOTIFICATION_DUPLICATE_WINDOW', 23);
-
-        // Compact logging - only log significant events
         $currentTime = now()->format('H:i:s');
-        $mode = $dryRun ? 'DRY_RUN' : ($duplicateWindowHours === 0 ? 'TESTING' : 'LIVE');
 
-        // Only output mode info on first run or when mode changes
-        if ($dryRun || $duplicateWindowHours === 0) {
-            $this->line("[$currentTime] Mode: $mode");
+        // Only show output for dry runs to avoid log spam
+        if ($dryRun) {
+            $this->line("[$currentTime] Mode: DRY_RUN");
         }
 
         // Simple execution log
         Log::info('Batch process executed', [
             'timestamp' => now()->format('Y-m-d H:i:s'),
-            'mode' => $mode,
+            'dry_run' => $dryRun,
         ]);
 
         $dailyJobsQueued = 0;
@@ -92,7 +90,6 @@ Examples:
                 'reminder_jobs_queued' => $reminderJobsQueued,
                 'total_jobs' => $totalJobs,
                 'dry_run' => $dryRun,
-                'duplicate_window_hours' => $duplicateWindowHours,
             ]);
 
             return self::SUCCESS;
@@ -283,6 +280,4 @@ Examples:
             $this->error('✗ Some jobs may have failed during processing');
         }
     }
-
-
 }
