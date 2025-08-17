@@ -13,7 +13,6 @@ Artisan::command('inspire', function () {
 Schedule::command('reminders:send-scheduled')
     ->hourly()
     ->withoutOverlapping()
-    ->runInBackground()
     ->appendOutputTo(storage_path('logs/scheduled-reminders.log'));
 
 // BATCH PROCESSING APPROACH - Queue all notifications and process them in batch
@@ -22,7 +21,6 @@ Schedule::command('reminders:send-scheduled')
 Schedule::command('notifications:batch-process')
     ->everyMinute()
     ->withoutOverlapping()
-    ->runInBackground()
     ->appendOutputTo(storage_path('logs/batch-notifications.log'));
 
 // LEGACY COMMANDS (commented out - replaced by batch processing)
@@ -47,7 +45,6 @@ Schedule::command('notifications:batch-process')
 Schedule::command('reminders:process-failed')
     ->everyFifteenMinutes()
     ->withoutOverlapping()
-    ->runInBackground()
     ->appendOutputTo(storage_path('logs/failed-notifications.log'));
 
 // Queue maintenance
