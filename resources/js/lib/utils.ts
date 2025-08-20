@@ -226,3 +226,57 @@ function calculateNextYearlyBillingDate(currentDate: Date, yearsToAdd: number): 
 
     return formatDate(nextDate) || '';
 }
+
+/**
+ * Get today's date in YYYY-MM-DD format without timezone conversion.
+ * This is safer than using toISOString() which can cause timezone shifts.
+ *
+ * @returns Today's date as YYYY-MM-DD string
+ */
+export function getTodayString(): string {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+/**
+ * Convert a date string to YYYY-MM-DD format without timezone conversion.
+ * Handles cases where the input might be in different formats.
+ *
+ * @param dateInput - The date to format (string or Date object)
+ * @returns Formatted date string in YYYY-MM-DD format or empty string if invalid
+ */
+export function toDateString(dateInput: string | Date | null | undefined): string {
+    if (!dateInput) {
+        return '';
+    }
+
+    // If it's already in YYYY-MM-DD format, return as-is
+    if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+        return dateInput;
+    }
+
+    try {
+        let date: Date;
+
+        if (typeof dateInput === 'string') {
+            // Add time component to force local timezone interpretation
+            date = new Date(dateInput + 'T00:00:00');
+        } else {
+            date = dateInput;
+        }
+
+        if (isNaN(date.getTime())) {
+            return '';
+        }
+
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    } catch {
+        return '';
+    }
+}

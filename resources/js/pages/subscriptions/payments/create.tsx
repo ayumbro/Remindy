@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
+import { getTodayString } from '@/lib/utils';
 
 interface Subscription {
     id: number;
@@ -51,7 +52,7 @@ interface PaymentForm {
 export default function PaymentCreate({ subscription, paymentMethods, currencies }: PaymentCreateProps) {
     const { data, setData, post, processing, errors } = useForm<PaymentForm>({
         amount: subscription.price?.toString() || '',
-        payment_date: new Date().toISOString().split('T')[0],
+        payment_date: getTodayString(),
         payment_method_id: subscription.payment_method?.id?.toString() || '',
         currency_id: subscription.currency?.id?.toString() || '',
         notes: '',
@@ -182,7 +183,7 @@ export default function PaymentCreate({ subscription, paymentMethods, currencies
                                     id="payment-date"
                                     name="payment_date"
                                     required
-                                    max={new Date().toISOString().split('T')[0]}
+                                    max={getTodayString()}
                                     value={data.payment_date}
                                     onChange={(value) => setData('payment_date', value)}
                                     disabled={processing}

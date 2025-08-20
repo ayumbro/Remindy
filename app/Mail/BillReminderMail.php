@@ -107,11 +107,10 @@ class BillReminderMail extends Mailable
      */
     private function formatDueDate(): string
     {
-        // Always use UTC as timezone has been removed from users
-        $timezone = 'UTC';
         $format = $this->user->date_format ?? 'Y-m-d';
 
-        return $this->dueDate->setTimezone($timezone)->format($format);
+        // Use the specialized email formatting method to avoid timezone conversion
+        return \App\Helpers\DateHelper::formatDateForEmail($this->dueDate, $format);
     }
 
     /**

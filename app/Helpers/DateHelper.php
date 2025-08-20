@@ -130,6 +130,60 @@ class DateHelper
     }
 
     /**
+     * Get today's date in ISO format (Y-m-d) without timezone conversion.
+     * This is safer than using Carbon::now()->format() which can be affected by timezone.
+     *
+     * @return string Today's date as YYYY-MM-DD string
+     */
+    public static function getTodayString(): string
+    {
+        return Carbon::now()->format(self::DATE_FORMAT_ISO);
+    }
+
+    /**
+     * Convert a date input to YYYY-MM-DD format safely without timezone conversion.
+     * Handles cases where the input might be in different formats.
+     *
+     * @param  Carbon|string|null  $dateInput  The date to format
+     * @return string|null Formatted date string in YYYY-MM-DD format or null if invalid
+     */
+    public static function toDateString($dateInput): ?string
+    {
+        if (! $dateInput) {
+            return null;
+        }
+
+        try {
+            $carbon = $dateInput instanceof Carbon ? $dateInput : Carbon::parse($dateInput);
+            return $carbon->format(self::DATE_FORMAT_ISO);
+        } catch (\Exception) {
+            return null;
+        }
+    }
+
+    /**
+     * Format a date for email notifications without timezone conversion.
+     * This method is specifically designed for email templates where we want
+     * to display the date exactly as stored without any timezone shifts.
+     *
+     * @param  Carbon|string|null  $date  The date to format
+     * @param  string|null  $format  Optional format override (defaults to user's date format)
+     * @return string|null Formatted date string or null if input is null
+     */
+    public static function formatDateForEmail($date, ?string $format = null): ?string
+    {
+        if (! $date) {
+            return null;
+        }
+
+        $carbon = $date instanceof Carbon ? $date : Carbon::parse($date);
+        $dateFormat = $format ?? self::DATE_FORMAT_ISO;
+
+        // For email formatting, avoid timezone conversion which can shift the date
+        return $carbon->format($dateFormat);
+    }
+
+    /**
      * Get the last day of a specific month and year.
      *
      * @param  int  $year  The year

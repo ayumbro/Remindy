@@ -18,6 +18,7 @@ import AppLayout from '@/layouts/app-layout';
 import { validateSubscriptionDates } from '@/lib/validation';
 import { type BreadcrumbItem } from '@/types';
 import { BILLING_CYCLES } from '@/constants/subscription';
+import { getTodayString } from '@/lib/utils';
 
 // Custom InputError component for better styling
 const InputError = ({ message, className = '' }: { message?: string; className?: string }) => {
@@ -127,8 +128,8 @@ export default function CreateSubscription({
         payment_method_id: 'none',
         billing_cycle: 'monthly',
         billing_interval: '1',
-        start_date: new Date().toISOString().split('T')[0],
-        first_billing_date: new Date().toISOString().split('T')[0],
+        start_date: getTodayString(),
+        first_billing_date: getTodayString(),
         end_date: '',
         website_url: '',
         notes: '',

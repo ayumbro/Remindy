@@ -237,7 +237,11 @@ export default function EditSubscription({
                     return null;
             }
 
-            return nextDate.toISOString().split('T')[0];
+            // Format date as YYYY-MM-DD without timezone conversion
+            const year = nextDate.getFullYear();
+            const month = String(nextDate.getMonth() + 1).padStart(2, '0');
+            const day = String(nextDate.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         } catch (error) {
             return null;
         }

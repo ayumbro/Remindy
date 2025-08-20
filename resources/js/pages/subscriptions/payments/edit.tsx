@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
+import { getTodayString, toDateString } from '@/lib/utils';
 
 interface Subscription {
     id: number;
@@ -71,13 +72,8 @@ export default function PaymentEdit({ subscription, payment, paymentMethods, cur
     const [attachmentsToRemove, setAttachmentsToRemove] = useState<number[]>([]);
 
     // Convert payment_date to YYYY-MM-DD format for HTML date input
-    let formattedDate = payment.payment_date;
-    if (payment.payment_date) {
-        const date = new Date(payment.payment_date);
-        if (!isNaN(date.getTime())) {
-            formattedDate = date.toISOString().split('T')[0];
-        }
-    }
+    // Use utility function to avoid timezone conversion issues
+    const formattedDate = toDateString(payment.payment_date);
 
     const { data, setData, put, post, processing, errors } = useForm<PaymentForm>({
         amount: payment.amount ? payment.amount.toString() : '',
@@ -273,7 +269,7 @@ export default function PaymentEdit({ subscription, payment, paymentMethods, cur
                                     id="payment-date"
                                     name="payment_date"
                                     required
-                                    max={new Date().toISOString().split('T')[0]}
+                                    max={getTodayString()}
                                     value={data.payment_date}
                                     onChange={(value) => setData('payment_date', value)}
                                     disabled={processing}
