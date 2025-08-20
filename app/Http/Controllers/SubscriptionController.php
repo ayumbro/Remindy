@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\DateHelper;
+use App\Http\Requests\UpdateSubscriptionRequest;
 use App\Models\Category;
 use App\Models\Currency;
 use App\Models\PaymentAttachment;
@@ -196,7 +197,7 @@ class SubscriptionController extends Controller
             'billing_cycle' => 'required|in:daily,weekly,monthly,quarterly,yearly,one-time',
             'billing_interval' => 'required|integer|min:1|max:12',
             'start_date' => 'required|date',
-            'first_billing_date' => 'nullable|date|after_or_equal:start_date',
+            'first_billing_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'website_url' => 'nullable|url|max:255',
             'notes' => 'nullable|string|max:1000',
@@ -210,7 +211,6 @@ class SubscriptionController extends Controller
             'reminder_intervals' => 'nullable|array',
             'reminder_intervals.*' => 'integer|in:1,2,3,7,15,30',
         ], [
-            'first_billing_date.after_or_equal' => 'The first billing date must be on or after the start date.',
             'end_date.after_or_equal' => 'The end date must be on or after the start date.',
         ])->validate();
 
@@ -238,9 +238,9 @@ class SubscriptionController extends Controller
 
         $subscription = $user->subscriptions()->create($validated);
 
-        // Set the billing cycle day based on the start date for monthly/quarterly cycles
+        // Set the billing cycle day based on the first billing date for monthly/quarterly cycles
         // This field is immutable once set and ensures consistent billing dates
-        $subscription->setBillingCycleDay();
+        $subscription->recalculateBillingCycleDay();
         $subscription->save();
 
         if (! empty($validated['category_ids'])) {
@@ -424,45 +424,32 @@ class SubscriptionController extends Controller
 
     /**
      * Update the specified resource in storage.
+     *
+     * This method handles updating subscription details including editable date fields
+     * (start_date and first_billing_date). When dates are modified, it automatically
+     * recalculates the billing cycle day and ensures billing consistency.
+     *
+     * @param UpdateSubscriptionRequest $request The validated request data
+     * @param Subscription $subscription The subscription to update
+     * @return RedirectResponse Redirect to subscription show page
      */
-    public function update(Request $request, Subscription $subscription): RedirectResponse
+    public function update(UpdateSubscriptionRequest $request, Subscription $subscription): RedirectResponse
     {
-        $this->authorize('update', $subscription);
-
         $user = $subscription->user;
+        $validated = $request->validated();
 
-        // Convert "none" to null for payment_method_id
-        $requestData = $request->all();
-        if (isset($requestData['payment_method_id']) && $requestData['payment_method_id'] === 'none') {
-            $requestData['payment_method_id'] = null;
+        // Extract date fields for special handling
+        $dateUpdates = [];
+        if (isset($validated['start_date'])) {
+            $dateUpdates['start_date'] = $validated['start_date'];
+            unset($validated['start_date']);
+        }
+        if (isset($validated['first_billing_date'])) {
+            $dateUpdates['first_billing_date'] = $validated['first_billing_date'];
+            unset($validated['first_billing_date']);
         }
 
-        $validated = validator($requestData, [
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'price' => 'required|numeric|min:0',
-            'currency_id' => 'required|exists:currencies,id',
-            'payment_method_id' => 'nullable|exists:payment_methods,id',
-            'end_date' => 'nullable|date|after_or_equal:'.$subscription->start_date,
-            'website_url' => 'nullable|url',
-            'notes' => 'nullable|string',
-            'category_ids' => 'nullable|array',
-            'category_ids.*' => 'exists:categories,id',
-            // Notification settings
-            'notifications_enabled' => 'boolean',
-            'use_default_notifications' => 'boolean',
-            'email_enabled' => 'boolean',
-            'webhook_enabled' => 'boolean',
-            'reminder_intervals' => 'nullable|array',
-            'reminder_intervals.*' => 'integer|in:1,2,3,7,15,30',
-        ], [
-            'end_date.after_or_equal' => 'The end date must be on or after the start date ('.$subscription->start_date.').',
-        ])->validate();
-
-        // Remove any immutable fields that might have been sent (extra security)
-        // These fields are immutable once set during subscription creation
-        unset($validated['start_date']);
-        unset($validated['first_billing_date']);
+        // Remove immutable billing configuration fields (these are not in the request but just to be safe)
         unset($validated['billing_cycle']);
         unset($validated['billing_interval']);
         unset($validated['billing_cycle_day']);
@@ -479,6 +466,11 @@ class SubscriptionController extends Controller
             $validated['email_enabled'], $validated['webhook_enabled'], $validated['reminder_intervals']);
 
         $subscription->update($validated);
+
+        // Handle date updates if provided
+        if (!empty($dateUpdates)) {
+            $subscription->updateDatesAndRecalculate($dateUpdates);
+        }
 
         // Handle notification preferences
         if ($notificationData['notifications_enabled']) {

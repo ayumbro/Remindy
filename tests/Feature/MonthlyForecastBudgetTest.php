@@ -154,16 +154,17 @@ class MonthlyForecastBudgetTest extends TestCase
     /** @test */
     public function it_includes_subscriptions_that_end_during_the_month()
     {
-        // Create a subscription that ends mid-month
+        // Create a subscription that ends mid-month but in the future
+        $endDate = Carbon::now()->endOfMonth()->subDays(5); // Ends 5 days before month end
         $subscription = Subscription::factory()->create([
             'user_id' => $this->user->id,
             'currency_id' => $this->currency->id,
             'billing_cycle' => 'daily',
             'billing_interval' => 1,
             'price' => 3.00,
-            'start_date' => Carbon::now()->subMonth(),
+            'start_date' => Carbon::now()->startOfMonth()->subDays(10), // Started before this month
             'first_billing_date' => Carbon::now()->startOfMonth(),
-            'end_date' => Carbon::now()->startOfMonth()->addDays(15), // Ends on 16th
+            'end_date' => $endDate,
         ]);
 
         $forecast = Subscription::getMonthlyForecast($this->user->id);
@@ -171,8 +172,12 @@ class MonthlyForecastBudgetTest extends TestCase
         $this->assertNotEmpty($forecast);
         $currencyForecast = $forecast->first();
 
-        // Should include daily charges from start of month to end date (16 days)
-        $expectedTotal = 16 * 3.00; // 1st to 16th inclusive
+        // Calculate expected total: daily charges from start of month to end date
+        $startOfMonth = Carbon::now()->startOfMonth();
+        $daysInForecast = (int) $startOfMonth->diffInDays($endDate) + 1; // +1 to include both start and end days, cast to int
+        $expectedTotal = $daysInForecast * 3.00;
+
+        // The actual calculation should match our expectation
         $this->assertEquals($expectedTotal, $currencyForecast['total']);
     }
 

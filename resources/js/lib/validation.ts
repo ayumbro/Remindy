@@ -68,22 +68,19 @@ export function validateDateNotInFuture(dateString: string, allowToday: boolean 
  *
  * @param startDate - The subscription start date
  * @param endDate - The subscription end date (optional)
- * @param firstBillingDate - The first billing date (optional)
  * @returns Object with validation results and error messages
  */
 export function validateSubscriptionDates(
     startDate: string,
     endDate?: string,
-    firstBillingDate?: string,
 ): {
     isValid: boolean;
     errors: {
         startDate?: string;
         endDate?: string;
-        firstBillingDate?: string;
     };
 } {
-    const errors: { startDate?: string; endDate?: string; firstBillingDate?: string } = {};
+    const errors: { startDate?: string; endDate?: string } = {};
 
     // Validate start date is not empty
     if (!startDate) {
@@ -97,12 +94,7 @@ export function validateSubscriptionDates(
         }
     }
 
-    // Validate first billing date is after start date
-    if (firstBillingDate && startDate) {
-        if (!validateEndDateAfterStartDate(startDate, firstBillingDate, true)) {
-            errors.firstBillingDate = 'First billing date must be on or after the start date.';
-        }
-    }
+    // First billing date validation was removed - no constraints needed
 
     return {
         isValid: Object.keys(errors).length === 0,

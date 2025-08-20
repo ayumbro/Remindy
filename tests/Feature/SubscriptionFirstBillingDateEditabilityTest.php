@@ -9,7 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-class SubscriptionFirstBillingDateImmutabilityTest extends TestCase
+class SubscriptionFirstBillingDateEditabilityTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -34,18 +34,21 @@ class SubscriptionFirstBillingDateImmutabilityTest extends TestCase
     }
 
     /** @test */
-    public function first_billing_date_cannot_be_modified_via_update()
+    public function first_billing_date_can_be_modified_via_update()
     {
-        $originalFirstBillingDate = $this->subscription->first_billing_date;
-
         $response = $this->actingAs($this->user)
             ->putWithCsrf("/subscriptions/{$this->subscription->id}", [
                 'name' => 'Updated Subscription Name',
                 'price' => 15.99,
                 'currency_id' => $this->currency->id,
-                // These should be ignored
                 'first_billing_date' => '2024-02-01',
                 'start_date' => '2024-02-01',
+                'notifications_enabled' => true,
+                'use_default_notifications' => true,
+                'email_enabled' => true,
+                'webhook_enabled' => false,
+                'reminder_intervals' => [7, 3, 1],
+                // These billing configuration fields should be ignored
                 'billing_cycle' => 'yearly',
                 'billing_interval' => 12,
             ]);
@@ -53,12 +56,12 @@ class SubscriptionFirstBillingDateImmutabilityTest extends TestCase
         $response->assertRedirect("/subscriptions/{$this->subscription->id}");
 
         $this->subscription->refresh();
-        
-        // first_billing_date should remain unchanged
-        $this->assertEquals($originalFirstBillingDate->format('Y-m-d'), $this->subscription->first_billing_date->format('Y-m-d'));
-        
-        // Other immutable fields should also remain unchanged
-        $this->assertEquals('2024-01-15', $this->subscription->start_date->format('Y-m-d'));
+
+        // Date fields should now be updated (they are no longer immutable)
+        $this->assertEquals('2024-02-01', $this->subscription->first_billing_date->format('Y-m-d'));
+        $this->assertEquals('2024-02-01', $this->subscription->start_date->format('Y-m-d'));
+
+        // Billing configuration fields should remain unchanged
         $this->assertEquals('monthly', $this->subscription->billing_cycle);
         $this->assertEquals(1, $this->subscription->billing_interval);
         

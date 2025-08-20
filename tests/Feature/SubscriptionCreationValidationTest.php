@@ -105,7 +105,7 @@ class SubscriptionCreationValidationTest extends TestCase
     }
 
     /** @test */
-    public function subscription_creation_validates_first_billing_date_after_start_date()
+    public function subscription_creation_allows_first_billing_date_before_start_date()
     {
         $response = $this->actingAs($this->user)
             ->postWithCsrf('/subscriptions', [
@@ -115,10 +115,20 @@ class SubscriptionCreationValidationTest extends TestCase
                 'billing_cycle' => 'monthly',
                 'billing_interval' => 1,
                 'start_date' => '2024-01-15',
-                'first_billing_date' => '2024-01-10', // Before start date
+                'first_billing_date' => '2024-01-10', // Before start date - should be allowed
+                'notifications_enabled' => true,
+                'use_default_notifications' => true,
+                'email_enabled' => true,
+                'webhook_enabled' => false,
+                'reminder_intervals' => [7, 3, 1],
             ]);
 
-        $response->assertSessionHasErrors(['first_billing_date']);
+        $response->assertRedirect('/subscriptions');
+        $this->assertDatabaseHas('subscriptions', [
+            'name' => 'Test Subscription',
+            'start_date' => '2024-01-15 00:00:00',
+            'first_billing_date' => '2024-01-10 00:00:00',
+        ]);
     }
 
     /** @test */

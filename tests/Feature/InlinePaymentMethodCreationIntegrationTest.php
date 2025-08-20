@@ -116,12 +116,16 @@ class InlinePaymentMethodCreationIntegrationTest extends TestCase
             'price' => $subscription->price,
             'currency_id' => $subscription->currency_id,
             'payment_method_id' => $newPaymentMethodData['id'], // Change to new payment method
+            'start_date' => $subscription->start_date->format('Y-m-d'),
+            'first_billing_date' => $subscription->first_billing_date->format('Y-m-d'),
             'end_date' => '',
             'website_url' => '',
             'notes' => '',
             'category_ids' => [],
             'notifications_enabled' => true,
+            'use_default_notifications' => true,
             'email_enabled' => true,
+            'webhook_enabled' => false,
             'reminder_intervals' => [7, 3, 1],
         ];
 

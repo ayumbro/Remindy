@@ -194,8 +194,9 @@ class Subscription extends Model
      *
      * Since next_billing_date is now a computed accessor, we need to get all active subscriptions
      * and filter them in PHP rather than in the database query.
+     * Use the static getDueSoon method for actual filtering by days.
      */
-    public function scopeDueSoon($query, $days = 7)
+    public function scopeDueSoon($query)
     {
         // Get all active subscriptions and filter in PHP since next_billing_date is computed
         return $query->active();
@@ -913,6 +914,57 @@ class Subscription extends Model
         $settings = $this->getEffectiveNotificationSettings();
         return $settings['notifications_enabled'] &&
                ($settings['email_enabled'] || $settings['webhook_enabled']);
+    }
+
+    /**
+     * Recalculate billing cycle day when start_date or first_billing_date changes.
+     * This method ensures that the billing cycle day is properly updated to maintain
+     * consistent billing dates when the subscription dates are modified.
+     */
+    public function recalculateBillingCycleDay(): void
+    {
+        // Only recalculate for monthly and quarterly cycles
+        if (in_array($this->billing_cycle, ['monthly', 'quarterly'])) {
+            // Use first_billing_date to determine the billing cycle day
+            $firstBillingDate = Carbon::parse($this->first_billing_date);
+            $this->billing_cycle_day = $firstBillingDate->day;
+        } else {
+            // For non-monthly cycles, billing_cycle_day should be null
+            $this->billing_cycle_day = null;
+        }
+    }
+
+    /**
+     * Update subscription dates and recalculate billing information.
+     * This method should be used when updating start_date or first_billing_date
+     * to ensure all related billing calculations remain consistent.
+     *
+     * @param array $dateUpdates Array containing 'start_date' and/or 'first_billing_date'
+     * @return bool Whether the update was successful
+     */
+    public function updateDatesAndRecalculate(array $dateUpdates): bool
+    {
+        // Validate that we have at least one date to update
+        if (!isset($dateUpdates['start_date']) && !isset($dateUpdates['first_billing_date'])) {
+            return false;
+        }
+
+        // Update the dates
+        if (isset($dateUpdates['start_date'])) {
+            $this->start_date = $dateUpdates['start_date'];
+        }
+
+        if (isset($dateUpdates['first_billing_date'])) {
+            $this->first_billing_date = $dateUpdates['first_billing_date'];
+        }
+
+        // No validation needed - first_billing_date can be before start_date
+
+        // Recalculate billing cycle day based on the new first_billing_date
+        $this->recalculateBillingCycleDay();
+
+        // Save the changes
+        return $this->save();
     }
 
     /**

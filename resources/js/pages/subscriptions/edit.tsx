@@ -1,5 +1,5 @@
 import { Head, useForm } from '@inertiajs/react';
-import { Bell, Calendar, DollarSign, FileText, LoaderCircle, Settings, Tag } from 'lucide-react';
+import { Bell, Calendar, DollarSign, FileText, LoaderCircle, Settings, Tag, Info } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -96,6 +96,8 @@ interface SubscriptionForm {
     payment_method_id: string;
     billing_cycle: string;
     billing_interval: string;
+    start_date: string;
+    first_billing_date: string;
     end_date: string;
     website_url: string;
     notes: string;
@@ -159,6 +161,8 @@ export default function EditSubscription({
         payment_method_id: subscription?.payment_method_id ? subscription.payment_method_id.toString() : 'none',
         billing_cycle: subscription?.billing_cycle || 'monthly',
         billing_interval: subscription?.billing_interval?.toString() || '1',
+        start_date: subscription?.start_date || '',
+        first_billing_date: subscription?.first_billing_date || '',
         end_date: subscription?.end_date || '',
         website_url: subscription?.website_url || '',
         notes: subscription?.notes || '',
@@ -200,6 +204,45 @@ export default function EditSubscription({
         });
     };
 
+    // Helper function to calculate next billing date preview
+    const calculateNextBillingDatePreview = () => {
+        if (!data.first_billing_date || !subscription) {
+            return null;
+        }
+
+        try {
+            const firstBillingDate = new Date(data.first_billing_date);
+            const paymentCount = 0; // For preview, assume no payments made yet
+
+            // Simple calculation based on billing cycle
+            let nextDate = new Date(firstBillingDate);
+
+            switch (subscription.billing_cycle) {
+                case 'daily':
+                    nextDate.setDate(nextDate.getDate() + (subscription.billing_interval * paymentCount));
+                    break;
+                case 'weekly':
+                    nextDate.setDate(nextDate.getDate() + (7 * subscription.billing_interval * paymentCount));
+                    break;
+                case 'monthly':
+                    nextDate.setMonth(nextDate.getMonth() + (subscription.billing_interval * paymentCount));
+                    break;
+                case 'quarterly':
+                    nextDate.setMonth(nextDate.getMonth() + (3 * subscription.billing_interval * paymentCount));
+                    break;
+                case 'yearly':
+                    nextDate.setFullYear(nextDate.getFullYear() + (subscription.billing_interval * paymentCount));
+                    break;
+                default:
+                    return null;
+            }
+
+            return nextDate.toISOString().split('T')[0];
+        } catch (error) {
+            return null;
+        }
+    };
+
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
 
@@ -214,7 +257,9 @@ export default function EditSubscription({
             return;
         }
 
-        if (data.end_date && !validateEndDateAfterStartDate(subscription.start_date, data.end_date, true)) {
+        // First billing date validation removed - no constraints needed
+
+        if (data.end_date && !validateEndDateAfterStartDate(data.start_date, data.end_date, true)) {
             return;
         }
         const { billing_cycle, billing_interval, ...updateData } = data;
@@ -415,31 +460,33 @@ export default function EditSubscription({
 
                                 <div className="grid gap-4 md:grid-cols-3">
                                     <div className="space-y-2">
-                                        <Label htmlFor="edit-subscription-start-date">Start Date</Label>
+                                        <Label htmlFor="edit-subscription-start-date">Start Date *</Label>
                                         <DatePickerInput
                                             id="edit-subscription-start-date"
                                             name="start_date"
-                                            value={subscription?.start_date || ''}
-                                            onChange={() => {}}
-                                            disabled={true}
+                                            value={data.start_date}
+                                            onChange={(value) => setData('start_date', value)}
+                                            disabled={processing}
                                             placeholder="Start date"
-                                            className="bg-muted"
+                                            error={!!errors.start_date}
                                         />
-                                        <p className="text-muted-foreground text-xs">Start date cannot be changed after creation</p>
+                                        <InputError message={errors.start_date} />
+                                        <p className="text-muted-foreground text-xs">Changing the start date will recalculate billing cycles</p>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="edit-subscription-first-billing-date">First Billing Date</Label>
+                                        <Label htmlFor="edit-subscription-first-billing-date">First Billing Date *</Label>
                                         <DatePickerInput
                                             id="edit-subscription-first-billing-date"
                                             name="first_billing_date"
-                                            value={subscription?.first_billing_date || ''}
-                                            onChange={() => {}}
-                                            disabled={true}
+                                            value={data.first_billing_date}
+                                            onChange={(value) => setData('first_billing_date', value)}
+                                            disabled={processing}
                                             placeholder="First billing date"
-                                            className="bg-muted"
+                                            error={!!errors.first_billing_date}
                                         />
-                                        <p className="text-muted-foreground text-xs">First billing date cannot be changed after creation</p>
+                                        <InputError message={errors.first_billing_date} />
+                                        <p className="text-muted-foreground text-xs">Can be before, on, or after the start date. Changes will recalculate billing cycles.</p>
                                     </div>
 
                                     <div className="space-y-2">
@@ -452,15 +499,34 @@ export default function EditSubscription({
                                             disabled={processing}
                                             error={!!errors.end_date}
                                             placeholder="Select end date (optional)"
-                                            min={subscription.start_date}
+                                            min={data.start_date}
                                         />
                                         <InputError message={errors.end_date} />
                                         <p className="text-muted-foreground text-xs">
-                                            Leave empty for ongoing subscriptions. End date must be on or after the start date ({subscription.start_date}
+                                            Leave empty for ongoing subscriptions. End date must be on or after the start date ({data.start_date}
                                             ).
                                         </p>
                                     </div>
                                 </div>
+
+                                {/* Next Billing Date Preview */}
+                                {data.first_billing_date && subscription.billing_cycle !== 'one-time' && (
+                                    <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Info className="h-4 w-4 text-blue-600" />
+                                            <h4 className="text-sm font-medium text-blue-900">Next Billing Date Preview</h4>
+                                        </div>
+                                        <p className="text-sm text-blue-700">
+                                            Based on your current settings, the next billing date will be: {' '}
+                                            <span className="font-medium">
+                                                {calculateNextBillingDatePreview() || 'Unable to calculate'}
+                                            </span>
+                                        </p>
+                                        <p className="text-xs text-blue-600 mt-1">
+                                            This preview assumes no payments have been made yet. The actual next billing date will be calculated based on your payment history.
+                                        </p>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Categories Section */}

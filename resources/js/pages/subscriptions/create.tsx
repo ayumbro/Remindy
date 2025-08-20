@@ -181,7 +181,7 @@ export default function CreateSubscription({
             return;
         }
 
-        const dateValidation = validateSubscriptionDates(data.start_date, data.end_date || undefined, data.first_billing_date);
+        const dateValidation = validateSubscriptionDates(data.start_date, data.end_date || undefined);
         if (!dateValidation.isValid) {
             return;
         }
@@ -450,11 +450,10 @@ export default function CreateSubscription({
                                             disabled={processing}
                                             error={!!errors.first_billing_date}
                                             placeholder="Select first billing date"
-                                            min={data.start_date}
                                         />
                                         <InputError message={errors.first_billing_date} />
                                         <p className="text-muted-foreground text-xs">
-                                            Usually the same as start date. This determines when billing cycles begin.
+                                            Can be before, on, or after the start date. This determines when billing cycles begin.
                                         </p>
                                     </div>
                                 </div>

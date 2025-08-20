@@ -149,7 +149,14 @@ class SubscriptionEndDateValidationTest extends TestCase
                 'name' => 'Updated Subscription',
                 'price' => 19.99,
                 'currency_id' => $this->currency->id,
-                'end_date' => '2023-12-31',
+                'start_date' => '2024-01-01',
+                'first_billing_date' => '2024-01-01',
+                'end_date' => '2023-12-31', // Before start date
+                'notifications_enabled' => true,
+                'use_default_notifications' => true,
+                'email_enabled' => true,
+                'webhook_enabled' => false,
+                'reminder_intervals' => [7, 3, 1],
             ]);
 
         $response->assertSessionHasErrors(['end_date']);
@@ -169,7 +176,14 @@ class SubscriptionEndDateValidationTest extends TestCase
                 'name' => 'Updated Subscription',
                 'price' => 19.99,
                 'currency_id' => $this->currency->id,
-                'end_date' => '2023-12-31',
+                'start_date' => '2024-01-01',
+                'first_billing_date' => '2024-01-01',
+                'end_date' => '2023-12-31', // Before start date
+                'notifications_enabled' => true,
+                'use_default_notifications' => true,
+                'email_enabled' => true,
+                'webhook_enabled' => false,
+                'reminder_intervals' => [7, 3, 1],
             ]);
 
         $response->assertSessionHasErrors(['end_date']);
@@ -178,6 +192,5 @@ class SubscriptionEndDateValidationTest extends TestCase
         $endDateError = $errors->get('end_date')[0];
 
         $this->assertStringContainsString('must be on or after the start date', $endDateError);
-        $this->assertStringContainsString('2024-01-01', $endDateError);
     }
 }
